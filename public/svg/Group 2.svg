@@ -1,0 +1,14 @@
+<svg width="1199" height="1418" viewBox="0 0 1199 1418" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 2">
+<rect id="rectback" x="0.5" y="0.5" width="1198" height="1417" fill="white" stroke="black"/>
+<g id="title">
+<text id="&#229;&#184;&#179;&#231;&#165;&#168;&#229;&#135;&#186;&#229;&#138;&#155;&#227;&#131;&#134;&#227;&#130;&#185;&#227;&#131;&#136;&#227;&#129;&#167;&#227;&#129;&#153;" fill="black" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="535" y="93.8636">&#x5e33;&#x7968;&#x51fa;&#x529b;&#x30c6;&#x30b9;&#x30c8;&#x3067;&#x3059;</tspan></text>
+</g>
+<g id="comport1">
+<rect id="rect1" x="57.5" y="152.5" width="220" height="151" stroke="black"/>
+<line id="line1" y1="-0.5" x2="221.009" y2="-0.5" transform="matrix(0.999959 -0.00908413 0.00862037 0.999963 57 228)" stroke="black"/>
+</g>
+<text id="Customer" fill="black" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="32" letter-spacing="0em"><tspan x="65" y="195.136">&#xff05;customer%</tspan></text>
+<text id="datetime" fill="black" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="32" letter-spacing="0em"><tspan x="65" y="279.136">&#xff05;datetime%</tspan></text>
+</g>
+</svg>

@@ -1,0 +1,22 @@
+{
+    "A fresh verification link has been sent to your email address.": "新しい確認リンクがメールアドレスに送信されました。",
+    "Before proceeding, please check your email for a verification link.": "先に進む前に、確認リンクのためにあなたの電子メールを確認してください。",
+    "click here to request another": "次のリクエストはこちら",
+    "Confirm Password": "パスワード（確認用）",
+    "Dashboard": "ダッシュボード",
+    "Email Address": "メールアドレス",
+    "Forgot Your Password?": "パスワードを忘れた方はこちら",
+    "If you did not receive the email": "メールが受信できなかった場合",
+    "Login": "ログイン",
+    "Logout": "ログアウト",
+    "Name": "氏名",
+    "Password": "パスワード",
+    "Please confirm your password before continuing.": "続行する前にパスワードを確認してください。",
+    "Register": "アカウント作成",
+    "Remember Me": "ログイン状態を保持する",
+    "Reset Password": "パスワード再設定",
+    "Send Password Reset Link": "パスワード再設定URLを送信",
+    "Toggle navigation": "ナビゲーション切替",
+    "Verify Your Email Address": "メールアドレスの確認",
+    "You are logged in!": "ログイン成功"
+}

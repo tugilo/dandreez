@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Assign extends Model
+{
+    use HasFactory;
+    
+    protected $guarded = ['id'];
+    
+    public $timestamps = true;
+
+    // リレーション: 現場との1対多の関係
+    public function workplace()
+    {
+        return $this->belongsTo(Workplace::class);
+    }
+
+    // リレーション: 建設会社との1対多の関係
+    public function constructionCompany()
+    {
+        return $this->belongsTo(ConstructionCompany::class);
+    }
+
+    // リレーション: 作業員との1対多の関係
+    public function worker()
+    {
+        return $this->belongsTo(Worker::class);
+    }
+}

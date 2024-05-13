@@ -1,0 +1,14 @@
+<svg width="600" height="800" viewBox="0 0 1199 1418" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 2">
+<rect id="rectback" x="0.5" y="0.5" width="1198" height="1417" fill="white" stroke="black"/>
+<g id="title">
+<text id="title1" fill="black" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="535" y="93.8636">出力テスト</tspan></text>
+</g>
+<g id="comport1">
+<rect id="rect1" x="57.5" y="152.5" width="220" height="151" stroke="black"/>
+<line id="line1" y1="-0.5" x2="221.009" y2="-0.5" transform="matrix(0.999959 -0.00908413 0.00862037 0.999963 57 228)" stroke="black"/>
+</g>
+<text id="Customer" fill="black" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="32" letter-spacing="0em" x="65" y="195.136">%customer%</text>
+<text id="datetime" fill="black" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="32" letter-spacing="0em" x="65" y="279.136">%datetime%</text>
+</g>
+</svg>
