@@ -28,9 +28,8 @@ class WorkplaceController extends Controller
      */
     public function create()
     {
-        $salers = Saler::all();
-        $salerStaffs = SalerStaff::all();
-        return view('workplaces.create', compact('salers', 'salerStaffs'));
+        $salers = Saler::where('show_flg', 1)->get();
+        return view('workplaces.create', compact('salers'));
     }
 
     /**

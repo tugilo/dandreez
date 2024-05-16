@@ -1,0 +1,43 @@
+/* Custom CSS for dark blue sidebar and header with gradient */
+.main-sidebar, .main-header {
+    background: linear-gradient(135deg, #003366 0%, #002244 100%) !important; /* 濃いブルーのグラデーション */
+    color: #ffffff;
+}
+
+.main-sidebar .nav-link {
+    color: #ffffff !important; /* 白色のリンクテキスト */
+}
+
+.main-sidebar .nav-link.active {
+    background-color: #004488 !important; /* アクティブなリンクの背景色 */
+    color: #ffffff !important; /* アクティブなリンクのテキスト色 */
+}
+
+/* Custom CSS for white content background */
+.content-wrapper, .main-footer {
+    background-color: #ffffff !important; /* 白色の背景 */
+}
+
+.content {
+    background-color: #ffffff !important; /* 白色の背景 */
+}
+
+.card {
+    background-color: #f0f8ff !important; /* カードの背景に微妙な色の変化 */
+    border: 1px solid #cce7ff; /* カードの境界線を薄いブルーに */
+}
+
+/* ヘッダーのテキスト色を白に変更 */
+.main-header .navbar-nav .nav-link {
+    color: #ffffff !important;
+}
+
+/* サイドバーテキストのホバー色を薄いブルーに変更 */
+.main-sidebar .nav-link:hover {
+    background-color: #004488 !important;
+}
+
+/* メインコンテンツの h1 に上マージンを追加 */
+.content h1 {
+    margin-top: 20px; /* 上マージンを追加 */
+}

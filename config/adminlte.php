@@ -193,15 +193,13 @@ return [
     'classes_body' => '',
     'classes_brand' => '',
     'classes_brand_text' => '',
-    'classes_content_wrapper' => '',
-    'classes_content_header' => '',
-    'classes_content' => '',
     'classes_sidebar' => 'sidebar-dark-primary elevation-4',
-    'classes_sidebar_nav' => '',
-    'classes_topnav' => 'navbar-white navbar-light',
+    'classes_topnav' => 'navbar-dark navbar-primary', // 濃いブルー
     'classes_topnav_nav' => 'navbar-expand',
-    'classes_topnav_container' => 'container',
-
+    'classes_content_wrapper' => 'content-wrapper-custom',
+    'classes_content_header' => 'content-header-custom',
+    'classes_content' => 'content-custom',
+            
     /*
     |--------------------------------------------------------------------------
     | Sidebar
