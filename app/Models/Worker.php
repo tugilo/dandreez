@@ -9,26 +9,19 @@ class Worker extends Model
 {
     use HasFactory;
 
-    /**
-     * モデルに関連付けるテーブル名
-     *
-     * @var string
-     */
     protected $table = 'workers';
-
-
     protected $guarded = ['id'];
     
     public $timestamps = true;
 
-    // リレーション: 建設会社との1対多の関係
+    // リレーション: 施工会社との1対多の関係
     public function constructionCompany()
     {
-        return $this->belongsTo(ConstructionCompany::class);
+        return $this->belongsTo(ConstructionCompany::class, 'construction_company_id');
     }
+
     public function role()
     {
-        // このユーザーに関連するRoleモデルを取得
         return $this->belongsTo(Role::class);
     }
 }

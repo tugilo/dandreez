@@ -36,8 +36,11 @@ class LoginController extends Controller
         $credentials = $request->only('login_id', 'password');
         Log::info('Input credentials:', $credentials);
 
-        if (Auth::attempt($credentials, $request->filled('remember'))) {
-            $login = Auth::user();
+        // カスタムクエリで有効なユーザーかどうか確認する
+        $login = Login::where('login_id', $credentials['login_id'])->where('show_flg', 1)->first();
+
+        if ($login && Auth::validate($credentials)) {
+            Auth::login($login, $request->filled('remember'));
             $userType = $login->userType;
             Log::debug('Authentication successful');
 
@@ -54,7 +57,6 @@ class LoginController extends Controller
         ])->withInput($request->only('login_id'));
     }
 
-    
     /**
      * ユーザータイプに基づいてリダイレクト先を返します。
      *

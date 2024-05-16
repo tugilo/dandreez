@@ -311,6 +311,56 @@ return [
             'icon' => 'fas fa-fw fa-users',
             'can'  => 'access-admin'
         ],
+        [
+            'header' => '得意先会社管理',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => '新規得意先会社登録',
+            'url' => 'customer_companies/create',
+            'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => '得意先会社一覧',
+            'url' => 'customer_companies',
+            'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-admin'
+        ],
+
+        [
+            'header' => '問屋会社管理',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => '新規問屋会社登録',
+            'url' => 'saler_companies/create',
+            'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => '問屋会社一覧',
+            'url' => 'saler_companies',
+            'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-admin'
+        ],
+        [
+            'header' => '施工会社管理',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => '新規施工会社登録',
+            'url' => 'construction_companies/create',
+            'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => '施工会社一覧',
+            'url' => 'construction_companies',
+            'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-admin'
+        ],
+
         // 得意先専用
         [
             'header' => '得意先専用',

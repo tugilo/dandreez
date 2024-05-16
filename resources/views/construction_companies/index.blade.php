@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'ユーザー一覧')
+@section('title', '施工会社一覧')
 
 @section('css')
     <!-- DataTablesのCSSを読み込み -->
@@ -32,7 +32,7 @@
 @stop
 
 @section('content_header')
-    <h1>ユーザー一覧</h1>
+    <h1>施工会社一覧</h1>
 @stop
 
 @section('content')
@@ -43,35 +43,31 @@
                 <thead>
                     <tr>
                         <th class="btn-icon">編集</th>
-                        <th>ユーザー種別</th>
-                        <th>名前</th>
-                        <th>メールアドレス</th>
-                        <th>ログインID</th>
-                        <th>ロール名</th>
+                        <th>ID</th>
                         <th>会社名</th>
+                        <th>電話番号</th>
+                        <th>メールアドレス</th>
                         <th>作成日</th>
                         <th>更新日</th>
                         <th class="btn-icon">削除</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($users as $user)
+                    @foreach ($constructionCompanies as $company)
                         <tr>
                             <td>
-                                <a href="{{ route('users.edit', $user['id']) }}" class="btn btn-warning btn-sm">
+                                <a href="{{ route('construction_companies.edit', $company->id) }}" class="btn btn-warning btn-sm">
                                     <i class="fas fa-pencil-alt"></i>
                                 </a>
                             </td>
-                            <td>{{ $user['userType'] }}</td>
-                            <td>{{ $user['name'] }}</td>
-                            <td>{{ $user['email'] }}</td>
-                            <td>{{ $user['login_id'] }}</td>
-                            <td>{{ $user['roleName'] }}</td>
-                            <td>{{ $user['companyName'] }}</td>
-                            <td>{{ $user['createdAt'] }}</td>
-                            <td>{{ $user['updatedAt'] }}</td>
+                            <td>{{ $company->id }}</td>
+                            <td>{{ $company->name }}</td>
+                            <td>{{ $company->tel }}</td>
+                            <td>{{ $company->email }}</td>
+                            <td>{{ $company->created_at }}</td>
+                            <td>{{ $company->updated_at }}</td>
                             <td>
-                                <form action="{{ route('users.destroy', $user['id']) }}" method="POST" style="display: inline;">
+                                <form action="{{ route('construction_companies.destroy', $company->id) }}" method="POST" style="display: inline;">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('本当に削除しますか？')">
@@ -86,25 +82,9 @@
         </div>
     </div>
 @stop
-
 @section('js')
-    <!-- DataTablesのJavaScriptを読み込み -->
-    <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.3/js/dataTables.bootstrap4.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#users-table').DataTable({
-                language: {
-                    url: "//cdn.datatables.net/plug-ins/1.11.3/i18n/ja.json"
-                },
-                responsive: true,
-                lengthChange: false,
-                autoWidth: false,
-                scrollX: true,
-                pagingType: "simple",
-                dom: 'Bfrtip',
-                buttons: []
-            });
-        });
-    </script>
+<script>
+$(document).ready(function() {
+});
+</script>
 @stop

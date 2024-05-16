@@ -23,11 +23,11 @@
 @section('auth_body')
     <form action="{{ $login_url }}" method="post">
         @csrf
-
+    
         {{-- ログインID入力フィールド --}}
         <div class="input-group mb-3">
             <input type="text" name="login_id" class="form-control @error('login_id') is-invalid @enderror"
-                   value="{{ old('login_id') }}" placeholder="{{ __('adminlte::adminlte.login_id') }}" autofocus>
+                   value="{{ old('login_id') }}" placeholder="ログインID" autofocus>
             <div class="input-group-append">
                 <div class="input-group-text">
                     <span class="fas fa-user {{ config('adminlte.classes_auth_icon', '') }}"></span>

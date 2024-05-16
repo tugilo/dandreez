@@ -9,6 +9,9 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SalerController;
 use App\Http\Controllers\WorkerController;
+use App\Http\Controllers\CustomerCompanyController;
+use App\Http\Controllers\SalerCompanyController;
+use App\Http\Controllers\ConstructionCompanyController;
 
 // 標準の認証ルート（ログイン、ログアウト、パスワードリセット）
 Auth::routes();
@@ -33,3 +36,10 @@ Route::get('/saler/home', [SalerController::class, 'index'])->name('saler.home')
 
 // 施工業者用のホームページ
 Route::get('/worker/home', [WorkerController::class, 'index'])->name('worker.home')->middleware('auth');
+
+// CustomerCompanyコントローラのリソースルート
+Route::resource('customer_companies', CustomerCompanyController::class);
+// SalerCompanyコントローラーのリソースルート
+Route::resource('saler_companies', SalerCompanyController::class);
+// SalerCompanyコントローラーのリソースルート
+Route::resource('construction_companies', ConstructionCompanyController::class);

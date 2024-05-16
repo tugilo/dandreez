@@ -22,7 +22,6 @@
                 </select>
             </div>
 
-
             <!-- 名前 -->
             <div class="form-group">
                 <label for="name">名前 <span class="badge bg-danger">必須</span></label>
@@ -36,7 +35,7 @@
 
             <div class="form-group">
                 <label for="name_kana">名前（カナ）</label>
-                <input type="text" name="name_kana" id="name_kana" class="form-control @error('name_kana') is-invalid @enderror" value="{{ old('name_kana') }}" required placeholder="名前（カナ）">
+                <input type="text" name="name_kana" id="name_kana" class="form-control @error('name_kana') is-invalid @enderror" value="{{ old('name_kana') }}" placeholder="名前（カナ）">
             </div>
 
             <!-- メールアドレス -->
@@ -64,7 +63,12 @@
             <!-- パスワード -->
             <div class="form-group">
                 <label for="password">パスワード <span class="badge bg-danger">必須</span></label>
-                <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" required placeholder="パスワード">
+                <div class="input-group">
+                    <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" required placeholder="パスワード">
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-secondary" id="generate-password">パスワード生成</button>
+                    </div>
+                </div>
                 @error('password')
                     <span class="invalid-feedback" role="alert">
                         <strong>{{ $message }}</strong>
@@ -120,4 +124,18 @@
         </form>
     </div>
 </div>
+@stop
+
+@section('js')
+    <script>
+        document.getElementById('generate-password').addEventListener('click', function() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*';
+            let password = '';
+            for (let i = 0; i < 12; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('password').value = password;
+            document.getElementById('password_confirmation').value = password;
+        });
+    </script>
 @stop
