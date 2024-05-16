@@ -16,5 +16,9 @@
         "sass": "^1.56.1",
         "vite": "^4.0.0",
         "vue": "^3.2.37"
+    },
+    "dependencies": {
+        "bootstrap-datepicker": "^1.10.0",
+        "laravel-mix": "^6.0.49"
     }
 }

@@ -366,7 +366,13 @@ return [
             'header' => '得意先専用',
             'can'  => 'access-customer'
         ],
-        // 問屋専用
+        [
+            'text' => '新規施工依頼登録',
+            'url' => 'workplaces/create',
+            'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-customer'
+        ],
+       // 問屋専用
         [
             'header' => '問屋専用',
             'can'  => 'access-saler'

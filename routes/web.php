@@ -12,6 +12,7 @@ use App\Http\Controllers\WorkerController;
 use App\Http\Controllers\CustomerCompanyController;
 use App\Http\Controllers\SalerCompanyController;
 use App\Http\Controllers\ConstructionCompanyController;
+use App\Http\Controllers\WorkplaceController;
 
 // 標準の認証ルート（ログイン、ログアウト、パスワードリセット）
 Auth::routes();
@@ -39,7 +40,29 @@ Route::get('/worker/home', [WorkerController::class, 'index'])->name('worker.hom
 
 // CustomerCompanyコントローラのリソースルート
 Route::resource('customer_companies', CustomerCompanyController::class);
+
 // SalerCompanyコントローラーのリソースルート
 Route::resource('saler_companies', SalerCompanyController::class);
-// SalerCompanyコントローラーのリソースルート
+
+// ConstructionCompanyコントローラーのリソースルート
 Route::resource('construction_companies', ConstructionCompanyController::class);
+
+// WorkplaceControllerのリソースルート
+Route::resource('workplaces', WorkplaceController::class)->middleware('auth');
+
+// 施工依頼の受注確認ルート
+Route::post('workplaces/{id}/approve', [WorkplaceController::class, 'approve'])->name('workplaces.approve')->middleware('auth');
+
+// 施工者アサインフォームの表示ルート
+Route::get('workplaces/{id}/assign', [WorkplaceController::class, 'assignForm'])->name('workplaces.assignForm')->middleware('auth');
+
+// 施工者アサインの処理ルート
+Route::post('workplaces/{id}/assign', [WorkplaceController::class, 'assign'])->name('workplaces.assign')->middleware('auth');
+
+// 施工依頼の編集
+Route::get('workplaces/{id}/edit', [WorkplaceController::class, 'edit'])->name('workplaces.edit');
+Route::put('workplaces/{id}', [WorkplaceController::class, 'update'])->name('workplaces.update');
+
+// 施工指示の追加
+Route::get('workplaces/{id}/instructions/create', [WorkplaceController::class, 'addInstruction'])->name('instructions.create');
+Route::post('workplaces/{id}/instructions', [WorkplaceController::class, 'storeInstruction'])->name('instructions.store');
