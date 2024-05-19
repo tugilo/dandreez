@@ -370,6 +370,12 @@ return [
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-customer'
         ],
+        [
+            'text' => '施工依頼一覧',
+            'url' => 'workplaces',
+            'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-customer'
+        ],
        // 問屋専用
         [
             'header' => '問屋専用',

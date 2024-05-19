@@ -5,7 +5,7 @@
     <!-- DataTablesのCSSを読み込み -->
     <link href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap4.min.css" rel="stylesheet">
     <style>
-        #users-table th, #users-table td {
+        #workplaces-table th, #users-table td {
             white-space: nowrap;  // テキストが折り返さないように設定
             padding-top: 8px;  // 上のパディングを調整
             padding-bottom: 8px;  // 下のパディングを調整
@@ -13,6 +13,7 @@
             line-height: 1.42857143;  // 標準の行高でBootstrapのテーブルと一致させる
         }
         .btn-icon {
+            white-space: nowrap;  // テキストが折り返さないように設定
             width: 30px;  // アイコンボタンの幅を30pxに固定
             padding: 0;  // アイコンボタン内のパディングを削除
         }
@@ -36,13 +37,13 @@
     <table id="workplaces-table" class="table table-bordered">
         <thead>
             <tr>
-                <th>編集</th>
+                <th class="btn-icon">編集</th>
                 <th>ID</th>
                 <th>得意先</th>
                 <th>施工名</th>
                 <th>施工開始日</th>
                 <th>施工終了日</th>
-                <th>指示</th>
+                <th class="btn-icon">指示</th>
             </tr>
         </thead>
         <tbody>
@@ -59,7 +60,9 @@
                     <td>{{ $workplace->construction_start }}</td>
                     <td>{{ $workplace->construction_end }}</td>
                     <td>
-                        <a href="{{ route('instructions.create', $workplace->id) }}" class="btn btn-secondary btn-sm">施工指示追加</a>
+                        <a href="{{ route('instructions.create', $workplace->id) }}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-hand-point-up"></i>
+                        </a>
                     </td>
                 </tr>
             @endforeach

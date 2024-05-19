@@ -40,49 +40,64 @@ class WorkplaceController extends Controller
         // バリデーション
         $validated = $request->validate([
             'saler_id' => 'required|exists:salers,id',
-            'saler_staff_id' => 'required|exists:saler_staffs,id',
+            'saler_staff_id' => 'nullable|exists:saler_staffs,id',
             'name' => 'required|string|max:255',
             'construction_start' => 'nullable|date',
             'construction_end' => 'nullable|date',
             'floor_space' => 'nullable|string|max:10',
             'construction_outline' => 'required|string|max:300',
             'memo' => 'nullable|string|max:300',
+            'zip' => 'nullable|string|max:7',
+            'prefecture' => 'nullable|string|max:128',
+            'city' => 'nullable|string|max:128',
+            'address' => 'nullable|string|max:255',
+            'building' => 'nullable|string|max:255',
+            'tel' => 'nullable|string|max:13',
         ]);
-
+    
+        // ログにリクエストデータを記録
+        Log::info('リクエストデータ:', $request->all());
+    
         // ログイン中のユーザー情報を取得
         $customer = Auth::user()->customerStaff->customer;
         $customerStaff = Auth::user()->customerStaff;
-
+    
         if (!$customer || !$customerStaff) {
             return redirect()->route('workplaces.index')->with('error', 'ユーザー情報の取得に失敗しました。');
         }
-
+    
         // 施工依頼の作成
         Workplace::create([
             'customer_id' => $customer->id,
             'customer_staff_id' => $customerStaff->id,
-            'saler_id' => $validated['saler_id'],
-            'saler_staff_id' => $validated['saler_staff_id'],
-            'name' => $validated['name'],
-            'construction_start' => $validated['construction_start'],
-            'construction_end' => $validated['construction_end'],
-            'floor_space' => $validated['floor_space'],
-            'construction_outline' => $validated['construction_outline'],
-            'memo' => $validated['memo'],
+            'saler_id' => $request->saler_id,
+            'saler_staff_id' => $request->saler_staff_id ?? null,
+            'name' => $request->name,
+            'construction_start' => $request->construction_start,
+            'construction_end' => $request->construction_end,
+            'floor_space' => $request->floor_space,
+            'construction_outline' => $request->construction_outline,
+            'memo' => $request->memo,
+            'zip' => $request->zip,
+            'prefecture' => $request->prefecture,
+            'city' => $request->city,
+            'address' => $request->address,
+            'building' => $request->building,
+            'tel' => $request->tel,
         ]);
-
+    
         Log::info('施工依頼が登録されました。', ['customer_id' => $customer->id]);
-
+    
         return redirect()->route('workplaces.index')->with('success', '施工依頼が登録されました。');
     }
-
+        
     /**
      * 施工依頼の編集フォームを表示
      */
     public function edit($id)
     {
         $workplace = Workplace::findOrFail($id);
-        $salers = Saler::all();
+        $salers = Saler::where('show_flg', 1)->get();
         return view('workplaces.edit', compact('workplace', 'salers'));
     }
 
@@ -94,7 +109,6 @@ class WorkplaceController extends Controller
         // バリデーション
         $validated = $request->validate([
             'saler_id' => 'required|exists:salers,id',
-            'saler_staff_id' => 'required|exists:saler_staffs,id',
             'name' => 'required|string|max:255',
             'construction_start' => 'nullable|date',
             'construction_end' => 'nullable|date',
@@ -103,7 +117,6 @@ class WorkplaceController extends Controller
             'memo' => 'nullable|string|max:300',
         ]);
 
-        // 施工依頼の更新
         $workplace = Workplace::findOrFail($id);
         $workplace->update($validated);
 
