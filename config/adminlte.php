@@ -358,6 +358,22 @@ return [
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-admin'
         ],
+        [
+            'header' => '通知管理',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => '新規通知内容登録',
+            'url' => 'notification_contents/create',
+            'icon' => 'fas fa-fw fa-bell',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => '通知内容一覧',
+            'url' => 'notification_contents',
+            'icon' => 'fas fa-fw fa-bell',
+            'can'  => 'access-admin'
+        ],
 
         // 得意先専用
         [

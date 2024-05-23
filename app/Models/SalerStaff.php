@@ -24,4 +24,21 @@ class SalerStaff extends Model
     {
         return $this->belongsTo(Role::class);
     }
+    
+    /**
+     * 送信された通知のリレーション
+     */
+    public function sentNotifications()
+    {
+        return $this->morphMany(Notification::class, 'sender');
+    }
+
+    /**
+     * 受信した通知のリレーション
+     */
+    public function receivedNotifications()
+    {
+        return $this->morphMany(NotificationRecipient::class, 'recipient');
+    }
+
 }

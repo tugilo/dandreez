@@ -13,6 +13,7 @@ use App\Http\Controllers\CustomerCompanyController;
 use App\Http\Controllers\SalerCompanyController;
 use App\Http\Controllers\ConstructionCompanyController;
 use App\Http\Controllers\WorkplaceController;
+use App\Http\Controllers\NotificationContentController;
 
 // 標準の認証ルート（ログイン、ログアウト、パスワードリセット）
 Auth::routes();
@@ -66,3 +67,6 @@ Route::put('workplaces/{id}', [WorkplaceController::class, 'update'])->name('wor
 // 施工指示の追加
 Route::get('workplaces/{id}/instructions/create', [WorkplaceController::class, 'addInstruction'])->name('instructions.create');
 Route::post('workplaces/{id}/instructions', [WorkplaceController::class, 'storeInstruction'])->name('instructions.store');
+
+// 通知内容管理のルート設定
+Route::resource('notification_contents', NotificationContentController::class);
