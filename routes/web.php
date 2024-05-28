@@ -14,6 +14,9 @@ use App\Http\Controllers\SalerCompanyController;
 use App\Http\Controllers\ConstructionCompanyController;
 use App\Http\Controllers\WorkplaceController;
 use App\Http\Controllers\NotificationContentController;
+use App\Http\Controllers\InstructionController;
+use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\FileController;
 
 // 標準の認証ルート（ログイン、ログアウト、パスワードリセット）
 Auth::routes();
@@ -49,7 +52,15 @@ Route::resource('saler_companies', SalerCompanyController::class);
 Route::resource('construction_companies', ConstructionCompanyController::class);
 
 // WorkplaceControllerのリソースルート
-Route::resource('workplaces', WorkplaceController::class)->middleware('auth');
+Route::resource('workplaces', WorkplaceController::class);
+Route::get('workplaces/{id}/details', [WorkplaceController::class, 'details'])->name('workplaces.details');
+
+// Instructions, Photos, Files へのルート
+Route::post('workplaces/{id}/instructions', [InstructionController::class, 'store'])->name('instructions.store');
+Route::post('workplaces/{id}/photos', [PhotoController::class, 'store'])->name('photos.store');
+Route::post('workplaces/{id}/files', [FileController::class, 'store'])->name('files.store');
+
+Route::get('workplaces/{id}/details', [WorkplaceController::class, 'details'])->name('workplaces.details');
 
 // 施工依頼の受注確認ルート
 Route::post('workplaces/{id}/approve', [WorkplaceController::class, 'approve'])->name('workplaces.approve')->middleware('auth');

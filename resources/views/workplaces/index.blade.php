@@ -60,7 +60,7 @@
                     <td>{{ $workplace->construction_start }}</td>
                     <td>{{ $workplace->construction_end }}</td>
                     <td>
-                        <a href="{{ route('instructions.create', $workplace->id) }}" class="btn btn-secondary btn-sm">
+                        <a href="{{ route('workplaces.details', $workplace->id) }}" class="btn btn-secondary btn-sm">
                             <i class="fas fa-hand-point-up"></i>
                         </a>
                     </td>

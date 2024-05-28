@@ -7,6 +7,8 @@ use App\Models\Customer;
 use App\Models\Saler;
 use App\Models\Worker;
 use App\Models\Instruction;
+use App\Models\Photo;
+use App\Models\File;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -54,20 +56,20 @@ class WorkplaceController extends Controller
             'building' => 'nullable|string|max:255',
             'tel' => 'nullable|string|max:13',
         ]);
-    
+
         // ログにリクエストデータを記録
         Log::info('リクエストデータ:', $request->all());
-    
+
         // ログイン中のユーザー情報を取得
         $customer = Auth::user()->customerStaff->customer;
         $customerStaff = Auth::user()->customerStaff;
-    
+
         if (!$customer || !$customerStaff) {
             return redirect()->route('workplaces.index')->with('error', 'ユーザー情報の取得に失敗しました。');
         }
-    
+
         // 施工依頼の作成
-        Workplace::create([
+        $workplace = Workplace::create([
             'customer_id' => $customer->id,
             'customer_staff_id' => $customerStaff->id,
             'saler_id' => $request->saler_id,
@@ -85,12 +87,27 @@ class WorkplaceController extends Controller
             'building' => $request->building,
             'tel' => $request->tel,
         ]);
-    
+
         Log::info('施工依頼が登録されました。', ['customer_id' => $customer->id]);
+
+        return redirect()->route('workplaces.details', ['id' => $workplace->id])->with('success', '施工依頼が登録されました。詳細を追加してください。');
+    }
+
     
-        return redirect()->route('workplaces.index')->with('success', '施工依頼が登録されました。');
+    /**
+     * 施工依頼の詳細設定
+     */
+    public function details($id)
+    {
+        $workplace = Workplace::findOrFail($id);
+        $instructions = Instruction::where('workplace_id', $id)->get();
+        $photos = Photo::where('workplace_id', $id)->get();  // 追加
+        $files = File::where('workplace_id', $id)->get();    // 追加
+        $units = Unit::where('show_flg', 1)->get();          // 追加
+        return view('workplaces.details', compact('workplace', 'instructions', 'photos', 'files', 'units'));
     }
         
+    
     /**
      * 施工依頼の編集フォームを表示
      */

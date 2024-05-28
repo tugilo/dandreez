@@ -30,15 +30,6 @@ class Notification extends Model
     {
         return $this->morphTo();
     }
-    
-    /**
-     * 通知コンテンツのリレーション
-     * 通知と通知コンテンツは多対1の関係
-     */
-    public function notificationContent()
-    {
-        return $this->belongsTo(NotificationContent::class);
-    }
 
     /**
      * 通知の受信者のリレーション
