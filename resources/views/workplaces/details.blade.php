@@ -39,16 +39,16 @@
                                     <span>{{ $i + 1 }}</span>
                                 </div>
                                 <div class="col-2">
-                                    <input type="text" name="instructions[{{ $i }}][construction_location]" placeholder="施工場所" class="form-control mb-2">
+                                    <input type="text" name="instructions[{{ $i }}][construction_location]" placeholder="施工箇所" class="form-control mb-2">
                                 </div>
                                 <div class="col-2">
-                                    <input type="text" name="instructions[{{ $i }}][construction_location_detail]" placeholder="施工場所詳細" class="form-control mb-2">
+                                    <input type="text" name="instructions[{{ $i }}][construction_location_detail]" placeholder="施工箇所詳細" class="form-control mb-2">
                                 </div>
                                 <div class="col-2">
-                                    <input type="text" name="instructions[{{ $i }}][product_name]" placeholder="製品名" class="form-control mb-2">
+                                    <input type="text" name="instructions[{{ $i }}][product_name]" placeholder="品名" class="form-control mb-2">
                                 </div>
                                 <div class="col-2">
-                                    <input type="text" name="instructions[{{ $i }}][product_number]" placeholder="製品番号" class="form-control mb-2">
+                                    <input type="text" name="instructions[{{ $i }}][product_number]" placeholder="品番" class="form-control mb-2">
                                 </div>
                                 <div class="col-1">
                                     <input type="text" name="instructions[{{ $i }}][amount]" placeholder="数量" class="form-control mb-2">
@@ -179,16 +179,16 @@
                             <span>${formCount}</span>
                         </div>
                         <div class="col-2">
-                            <input type="text" name="instructions[${formCount}][construction_location]" placeholder="施工場所" class="form-control mb-2">
+                            <input type="text" name="instructions[${formCount}][construction_location]" placeholder="施工箇所" class="form-control mb-2">
                         </div>
                         <div class="col-2">
-                            <input type="text" name="instructions[${formCount}][construction_location_detail]" placeholder="施工場所詳細" class="form-control mb-2">
+                            <input type="text" name="instructions[${formCount}][construction_location_detail]" placeholder="施工箇所詳細" class="form-control mb-2">
                         </div>
                         <div class="col-2">
-                            <input type="text" name="instructions[${formCount}][product_name]" placeholder="製品名" class="form-control mb-2">
+                            <input type="text" name="instructions[${formCount}][product_name]" placeholder="品名" class="form-control mb-2">
                         </div>
                         <div class="col-2">
-                            <input type="text" name="instructions[${formCount}][product_number]" placeholder="製品番号" class="form-control mb-2">
+                            <input type="text" name="instructions[${formCount}][product_number]" placeholder="品番" class="form-control mb-2">
                         </div>
                         <div class="col-1">
                             <input type="text" name="instructions[${formCount}][amount]" placeholder="数量" class="form-control mb-2">

@@ -13,7 +13,10 @@ use App\Http\Controllers\CustomerCompanyController;
 use App\Http\Controllers\SalerCompanyController;
 use App\Http\Controllers\ConstructionCompanyController;
 use App\Http\Controllers\WorkplaceController;
-use App\Http\Controllers\NotificationContentController;
+use App\Http\Controllers\InstructionController;
+use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\FileController;
+use App\Http\Controllers\NotificationContentController; // 新しく追加
 
 // 標準の認証ルート（ログイン、ログアウト、パスワードリセット）
 Auth::routes();
@@ -41,32 +44,25 @@ Route::get('/worker/home', [WorkerController::class, 'index'])->name('worker.hom
 
 // CustomerCompanyコントローラのリソースルート
 Route::resource('customer_companies', CustomerCompanyController::class);
-
 // SalerCompanyコントローラーのリソースルート
 Route::resource('saler_companies', SalerCompanyController::class);
-
 // ConstructionCompanyコントローラーのリソースルート
 Route::resource('construction_companies', ConstructionCompanyController::class);
 
-// WorkplaceControllerのリソースルート
-Route::resource('workplaces', WorkplaceController::class)->middleware('auth');
+// Workplaceコントローラーのリソースルート
+Route::resource('workplaces', WorkplaceController::class);
 
-// 施工依頼の受注確認ルート
-Route::post('workplaces/{id}/approve', [WorkplaceController::class, 'approve'])->name('workplaces.approve')->middleware('auth');
+// Instructionコントローラーのリソースルート
+Route::post('workplaces/{id}/instructions', [WorkplaceController::class, 'storeInstructions'])->name('instructions.store');
 
-// 施工者アサインフォームの表示ルート
-Route::get('workplaces/{id}/assign', [WorkplaceController::class, 'assignForm'])->name('workplaces.assignForm')->middleware('auth');
+// Photoコントローラーのリソースルート
+Route::post('workplaces/{id}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
-// 施工者アサインの処理ルート
-Route::post('workplaces/{id}/assign', [WorkplaceController::class, 'assign'])->name('workplaces.assign')->middleware('auth');
+// Fileコントローラーのリソースルート
+Route::post('workplaces/{id}/files', [FileController::class, 'store'])->name('files.store');
 
-// 施工依頼の編集
-Route::get('workplaces/{id}/edit', [WorkplaceController::class, 'edit'])->name('workplaces.edit');
-Route::put('workplaces/{id}', [WorkplaceController::class, 'update'])->name('workplaces.update');
+// Workplace詳細設定画面
+Route::get('workplaces/{id}/details', [WorkplaceController::class, 'details'])->name('workplaces.details');
 
-// 施工指示の追加
-Route::get('workplaces/{id}/instructions/create', [WorkplaceController::class, 'addInstruction'])->name('instructions.create');
-Route::post('workplaces/{id}/instructions', [WorkplaceController::class, 'storeInstruction'])->name('instructions.store');
-
-// 通知内容管理のルート設定
-Route::resource('notification_contents', NotificationContentController::class);
+// NotificationContentコントローラーのリソースルート
+Route::resource('notification_contents', NotificationContentController::class)->middleware('auth');

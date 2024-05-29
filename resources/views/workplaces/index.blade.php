@@ -41,9 +41,8 @@
                 <th>ID</th>
                 <th>得意先</th>
                 <th>施工名</th>
-                <th>施工開始日</th>
-                <th>施工終了日</th>
-                <th class="btn-icon">指示</th>
+                <th>施工期間</th>
+                <th class="btn-icon">詳細</th>
             </tr>
         </thead>
         <tbody>
@@ -57,10 +56,9 @@
                     <td>{{ $workplace->id }}</td>
                     <td>{{ $workplace->customer->name }}</td>
                     <td>{{ $workplace->name }}</td>
-                    <td>{{ $workplace->construction_start }}</td>
-                    <td>{{ $workplace->construction_end }}</td>
+                    <td>{{ $workplace->construction_start }} ~ {{ $workplace->construction_end }}</td>
                     <td>
-                        <a href="{{ route('instructions.create', $workplace->id) }}" class="btn btn-secondary btn-sm">
+                        <a href="{{ route('workplaces.details', $workplace->id) }}" class="btn btn-secondary btn-sm">
                             <i class="fas fa-hand-point-up"></i>
                         </a>
                     </td>
@@ -69,10 +67,6 @@
         </tbody>
     </table>
 </div>
-@endsection
-
-@section('css')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
 @endsection
 
 @section('js')
@@ -95,5 +89,4 @@
             });
         });
     </script>
-</script>
 @endsection
