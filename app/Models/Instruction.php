@@ -12,6 +12,10 @@ class Instruction extends Model
     protected $guarded = ['id'];
     
     public $timestamps = true;
+    
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
 
     // リレーション: 現場との1対多の関係
     public function workplace()
@@ -24,4 +28,5 @@ class Instruction extends Model
     {
         return $this->belongsTo(Unit::class);
     }
+    
 }

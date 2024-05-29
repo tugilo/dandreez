@@ -56,7 +56,13 @@ Route::resource('workplaces', WorkplaceController::class);
 Route::post('workplaces/{id}/instructions', [WorkplaceController::class, 'storeInstructions'])->name('instructions.store');
 
 // Photoコントローラーのリソースルート
-Route::post('workplaces/{id}/photos', [PhotoController::class, 'store'])->name('photos.store');
+Route::post('/workplaces/{workplaceId}/photos', [PhotoController::class, 'store'])->name('photos.store');
+Route::put('workplaces/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('photos.update');
+Route::delete('workplaces/{workplaceId}/photos/{id}', [PhotoController::class, 'destroy'])->name('photos.destroy');
+
+
+Route::put('instructions/{id}', [WorkplaceController::class, 'updateInstruction'])->name('instructions.update');
+Route::delete('instructions/{id}', [WorkplaceController::class, 'deleteInstruction'])->name('instructions.delete');
 
 // Fileコントローラーのリソースルート
 Route::post('workplaces/{id}/files', [FileController::class, 'store'])->name('files.store');

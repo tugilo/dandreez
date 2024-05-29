@@ -12,6 +12,7 @@ use App\Models\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class WorkplaceController extends Controller
 {
@@ -100,31 +101,45 @@ class WorkplaceController extends Controller
     public function details($id)
     {
         // 施工依頼の詳細情報を取得
-        $workplace = Workplace::findOrFail($id);
-        $instructions = Instruction::where('workplace_id', $id)->get();
-        $photos = Photo::where('workplace_id', $id)->get();  // 追加
-        $files = File::where('workplace_id', $id)->get();    // 追加
+        $workplace = Workplace::where('show_flg', 1)->findOrFail($id);
+        $instructions = Instruction::where('workplace_id', $id)->where('show_flg', 1)->get();
+        $photos = Photo::where('workplace_id', $id)->where('show_flg', 1)->get();  // 追加
+        $files = File::where('workplace_id', $id)->where('show_flg', 1)->get();    // 追加
         $units = Unit::where('show_flg', 1)->get();
         return view('workplaces.details', compact('workplace', 'instructions', 'photos', 'files', 'units'));
     }
-
+    
     /**
      * 施工指示を保存
      */
     public function storeInstructions(Request $request, $id)
     {
+        // ログにリクエストデータを記録
+        Log::info('リクエストデータ:', $request->all());
+    
+        // フィルタリング
+        $filteredInstructions = array_filter($request->instructions, function ($instruction) {
+            return !is_null($instruction['construction_location']) && !is_null($instruction['product_name']);
+        });
+    
+        Log::info('フィルタリング後のデータ:', $filteredInstructions);
+    
         // バリデーション
-        $validated = $request->validate([
+        $validated = Validator::make(['instructions' => $filteredInstructions], [
             'instructions' => 'required|array',
             'instructions.*.construction_location' => 'required|string|max:255',
             'instructions.*.construction_location_detail' => 'nullable|string|max:255',
             'instructions.*.product_name' => 'required|string|max:255',
             'instructions.*.product_number' => 'nullable|string|max:255',
-            'instructions.*.amount' => 'nullable|integer',
+            'instructions.*.amount' => 'nullable|numeric|min:0',
             'instructions.*.unit_id' => 'required|exists:units,id',
         ]);
-
-        foreach ($validated['instructions'] as $instructionData) {
+    
+        if ($validated->fails()) {
+            return redirect()->back()->withErrors($validated)->withInput();
+        }
+    
+        foreach ($filteredInstructions as $instructionData) {
             Instruction::create([
                 'workplace_id' => $id,
                 'construction_location' => $instructionData['construction_location'],
@@ -135,9 +150,11 @@ class WorkplaceController extends Controller
                 'unit_id' => $instructionData['unit_id'],
             ]);
         }
-
+    
         return redirect()->route('workplaces.details', ['id' => $id])->with('success', '指示内容が追加されました。');
     }
+    
+
 
     /**
      * 施工依頼の編集フォームを表示
