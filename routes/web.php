@@ -44,8 +44,10 @@ Route::get('/worker/home', [WorkerController::class, 'index'])->name('worker.hom
 
 // CustomerCompanyコントローラのリソースルート
 Route::resource('customer_companies', CustomerCompanyController::class);
+
 // SalerCompanyコントローラーのリソースルート
 Route::resource('saler_companies', SalerCompanyController::class);
+
 // ConstructionCompanyコントローラーのリソースルート
 Route::resource('construction_companies', ConstructionCompanyController::class);
 
@@ -60,15 +62,24 @@ Route::post('/workplaces/{workplaceId}/photos', [PhotoController::class, 'store'
 Route::put('workplaces/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('photos.update');
 Route::delete('workplaces/{workplaceId}/photos/{id}', [PhotoController::class, 'destroy'])->name('photos.destroy');
 
+// Fileコントローラーのリソースルート
+Route::post('workplaces/{id}/files', [FileController::class, 'store'])->name('files.store');
+Route::put('workplaces/{workplaceId}/files/{id}', [FileController::class, 'update'])->name('files.update');
+Route::delete('workplaces/{workplaceId}/files/{id}', [FileController::class, 'destroy'])->name('files.destroy');
 
 Route::put('instructions/{id}', [WorkplaceController::class, 'updateInstruction'])->name('instructions.update');
 Route::delete('instructions/{id}', [WorkplaceController::class, 'deleteInstruction'])->name('instructions.delete');
 
 // Fileコントローラーのリソースルート
 Route::post('workplaces/{id}/files', [FileController::class, 'store'])->name('files.store');
+Route::put('workplaces/{workplaceId}/files/{id}', [FileController::class, 'update'])->name('files.update');
+Route::delete('workplaces/{workplaceId}/files/{id}', [FileController::class, 'destroy'])->name('files.destroy');
 
 // Workplace詳細設定画面
 Route::get('workplaces/{id}/details', [WorkplaceController::class, 'details'])->name('workplaces.details');
 
 // NotificationContentコントローラーのリソースルート
 Route::resource('notification_contents', NotificationContentController::class)->middleware('auth');
+
+// 問屋の施工依頼一覧
+Route::get('/saler/workplaces', [SalerController::class, 'workplaces'])->name('saler.workplaces')->middleware('auth');

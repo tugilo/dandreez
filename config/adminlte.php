@@ -397,6 +397,13 @@ return [
             'header' => '問屋専用',
             'can'  => 'access-saler'
         ],
+        [
+            'text' => '施工依頼一覧',
+            'url'  => 'saler/workplaces',
+            'icon' => 'fas fa-fw fa-list',
+            'can'  => 'access-saler',
+        ],
+
         // 施工業者専用
         [
             'header' => '施工業者専用',

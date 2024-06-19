@@ -9,6 +9,17 @@
 @section('content')
 <div class="card">
     <div class="card-body">
+        @if (session('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        @endif
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
         <div class="mb-4">
             <!-- 施工依頼情報の表示 -->
             <h5>施工依頼情報</h5>
@@ -110,7 +121,7 @@
                                     <td class="editable">{{ $instruction->product_name }}</td>
                                     <td class="editable">{{ $instruction->product_number }}</td>
                                     <td class="editable">{{ $instruction->amount }}</td>
-                                    <td class="editable">{{ $instruction->unit->name }} m</td>
+                                    <td class="editable">{{ $instruction->unit->name }}</td>
                                     <td>
                                         <button type="button" class="btn btn-danger btn-sm delete-instruction" data-id="{{ $instruction->id }}">
                                             <i class="fas fa-trash"></i>
@@ -210,24 +221,46 @@
                     @csrf
                     <input type="hidden" name="workplace_id" value="{{ $workplace->id }}">
                     <!-- 添付書類アップロードフィールド -->
-                    <div class="form-group">
-                        <label for="files">添付書類</label>
-                        <input type="file" name="files[]" id="files" class="form-control" multiple>
+                    <div class="d-flex flex-wrap">
+                        <div class="form-group mr-3">
+                            <label for="files">添付書類</label>
+                            <input type="file" name="files[0][file]" class="form-control-file" required>
+                            <input type="text" name="files[0][title]" class="form-control mt-2" placeholder="タイトル">
+                            <textarea name="files[0][comment]" class="form-control mt-2" placeholder="コメント"></textarea>
+                        </div>
+                        <div class="form-group mr-3">
+                            <label for="files">添付書類</label>
+                            <input type="file" name="files[1][file]" class="form-control-file">
+                            <input type="text" name="files[1][title]" class="form-control mt-2" placeholder="タイトル">
+                            <textarea name="files[1][comment]" class="form-control mt-2" placeholder="コメント"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="files">添付書類</label>
+                            <input type="file" name="files[2][file]" class="form-control-file">
+                            <input type="text" name="files[2][title]" class="form-control mt-2" placeholder="タイトル">
+                            <textarea name="files[2][comment]" class="form-control mt-2" placeholder="コメント"></textarea>
+                        </div>
                     </div>
-                    <div class="text-center">
+                    <div class="text-center mt-3">
                         <button type="submit" class="btn btn-primary">保存</button>
                     </div>
                 </form>
                 <!-- 既存の添付書類を表示 -->
                 <div class="mt-4">
                     <h5>既存の添付書類</h5>
-                    <ul class="list-group">
+                    <div class="file-icons d-flex flex-wrap">
                         @foreach ($files as $file)
-                            <li class="list-group-item">{{ $file->file_name }}</li>
+                            <div class="file-icon text-center m-2">
+                                <a href="{{ asset('storage/' . $file->directory . $file->file_name) }}" target="_blank">
+                                    <i class="fas fa-file fa-3x"></i>
+                                    <div class="file-title mt-2">{{ $file->title ?? '無題' }}</div>
+                                </a>
+                            </div>
                         @endforeach
-                    </ul>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -253,6 +286,30 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
+        }
+        .file-icon {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+            margin: 10px;
+            text-align: center;
+            vertical-align: top;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .file-icon img {
+            width: 50px;
+            height: 50px;
+        }
+        .file-title {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
 
     </style>
@@ -423,6 +480,17 @@
                     reader.readAsDataURL(files[0]);
                 }
             });
+
+            // タブの選択状態を保存
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                localStorage.setItem('activeTab', $(e.target).attr('href'));
+            });
+
+            // 保存されたタブを読み込む
+            var activeTab = localStorage.getItem('activeTab');
+            if(activeTab){
+                $('#detailTabs a[href="' + activeTab + '"]').tab('show');
+            }
         });
     </script>
 @stop

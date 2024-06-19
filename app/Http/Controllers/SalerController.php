@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Workplace;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
 
 class SalerController extends Controller
 {
@@ -19,6 +22,19 @@ class SalerController extends Controller
     public function index()
     {
         return view('saler.home');
+    }
+
+    /**
+     * 施工依頼の一覧を表示
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function workplaces()
+    {
+        $salerId = Auth::user()->salerStaff->saler_id;
+        $workplaces = Workplace::where('saler_id', $salerId)->get();
+
+        return view('saler.workplaces', compact('workplaces'));
     }
 
 }

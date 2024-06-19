@@ -14,15 +14,6 @@ class Notification extends Model
     public $timestamps = true;
 
     /**
-     * 通知コンテンツのリレーション
-     * 通知と通知コンテンツは多対1の関係
-     */
-    public function notificationContent()
-    {
-        return $this->belongsTo(NotificationContent::class);
-    }
-
-    /**
      * 通知の送信者のリレーション
      * 通知は得意先スタッフ、問屋スタッフ、施工業者スタッフから送信される
      */
