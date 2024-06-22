@@ -22,7 +22,9 @@ class WorkplaceController extends Controller
     public function index()
     {
         // 施工依頼の一覧を取得
-        $workplaces = Workplace::with('customer', 'saler', 'customerStaff', 'salerStaff', 'workers')->get();
+        $workplaces = Workplace::with('customer', 'saler', 'customerStaff', 'salerStaff', 'workers', 'status')->get();
+        // $workplacesをログに出力
+        Log::info('Workplaces:', ['workplaces' => $workplaces]);
         return view('workplaces.index', compact('workplaces'));
     }
 

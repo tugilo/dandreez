@@ -14,13 +14,20 @@ use Illuminate\Support\Facades\Validator;
 
 class SalerWorkplaceController extends Controller
 {
+    public function __construct()
+    {
+        // 認証と問屋のアクセス権を確認するミドルウェアを適用
+        $this->middleware(['auth', 'can:access-saler']);
+    }
+
     public function index()
     {
         // ログイン中の問屋IDを取得
         $salerId = Auth::user()->salerStaff->saler_id;
 
         // 施工依頼の一覧を取得
-        $workplaces = Workplace::where('saler_id', $salerId)->with('customer')->get();
+        $workplaces = Workplace::where('saler_id', $salerId)->with('customer', 'status')->get();
+
         return view('saler.workplaces.index', compact('workplaces'));
     }
 
@@ -29,10 +36,61 @@ class SalerWorkplaceController extends Controller
         // 施工依頼の詳細情報を取得
         $workplace = Workplace::with(['customer', 'instructions', 'photos', 'files'])->findOrFail($id);
         $instructions = Instruction::where('workplace_id', $id)->where('show_flg', 1)->get();
-        $photos = Photo::where('workplace_id', $id)->where('show_flg', 1)->get();  
+        $photos = Photo::where('workplace_id', $id)->where('show_flg', 1)->get();
         $files = File::where('workplace_id', $id)->where('show_flg', 1)->get();
         $units = Unit::where('show_flg', 1)->get();
         return view('saler.workplaces.show', compact('workplace', 'instructions', 'photos', 'files', 'units'));
+    }
+
+    public function create()
+    {
+        // 新規作成画面を表示するロジックを追加
+        return view('saler.workplaces.create');
+    }
+
+    public function store(Request $request)
+    {
+        // 新規作成の保存ロジックを追加
+        $request->validate([
+            'name' => 'required|string|max:255',
+            // その他のバリデーションルールを追加
+        ]);
+
+        $workplace = new Workplace($request->all());
+        $workplace->saler_id = Auth::user()->salerStaff->saler_id;
+        $workplace->save();
+
+        return redirect()->route('saler.workplaces.index')->with('success', '施工依頼が作成されました。');
+    }
+
+    public function edit($id)
+    {
+        // 編集画面を表示するロジックを追加
+        $workplace = Workplace::findOrFail($id);
+        return view('saler.workplaces.edit', compact('workplace'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        // 編集の保存ロジックを追加
+        $request->validate([
+            'name' => 'required|string|max:255',
+            // その他のバリデーションルールを追加
+        ]);
+
+        $workplace = Workplace::findOrFail($id);
+        $workplace->update($request->all());
+
+        return redirect()->route('saler.workplaces.index')->with('success', '施工依頼が更新されました。');
+    }
+
+    public function destroy($id)
+    {
+        // 削除ロジックを追加
+        $workplace = Workplace::findOrFail($id);
+        $workplace->delete();
+
+        return redirect()->route('saler.workplaces.index')->with('success', '施工依頼が削除されました。');
     }
 
     public function storeInstructions(Request $request, $id)
