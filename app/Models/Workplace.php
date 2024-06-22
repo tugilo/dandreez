@@ -83,4 +83,13 @@ class Workplace extends Model
     {
         return $this->belongsToMany(Worker::class, 'assigns', 'workplace_id', 'worker_id');
     }
+    
+    /**
+     * リレーション: ステータスとの1対多の関係
+     */
+    public function status()
+    {
+        return $this->belongsTo(Status::class);
+    }
+
 }

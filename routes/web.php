@@ -16,7 +16,9 @@ use App\Http\Controllers\WorkplaceController;
 use App\Http\Controllers\InstructionController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\FileController;
-use App\Http\Controllers\NotificationContentController; // 新しく追加
+use App\Http\Controllers\NotificationContentController;
+use App\Http\Controllers\SalerWorkplaceController;
+use App\Http\Controllers\StatusController;
 
 // 標準の認証ルート（ログイン、ログアウト、パスワードリセット）
 Auth::routes();
@@ -32,6 +34,10 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 // システム管理者のホーム
 Route::get('/admin/home', [AdminController::class, 'index'])->name('admin.home');
 Route::resource('users', UserController::class)->except(['show']);
+
+#ステータス管理用
+Route::resource('/admin/statuses', StatusController::class);
+Route::post('/admin/statuses/{status}/restore', [StatusController::class, 'restore'])->name('statuses.restore');
 
 // 得意先用のホームページ
 Route::get('/customer/home', [CustomerController::class, 'index'])->name('customer.home')->middleware('auth');
@@ -81,5 +87,12 @@ Route::get('workplaces/{id}/details', [WorkplaceController::class, 'details'])->
 // NotificationContentコントローラーのリソースルート
 Route::resource('notification_contents', NotificationContentController::class)->middleware('auth');
 
-// 問屋の施工依頼一覧
-Route::get('/saler/workplaces', [SalerController::class, 'workplaces'])->name('saler.workplaces')->middleware('auth');
+
+// 問屋用の施工依頼一覧表示
+Route::get('/saler/workplaces', [SalerWorkplaceController::class, 'index'])->name('saler.workplaces.index')->middleware('can:access-saler');
+
+// 問屋用の施工依頼詳細表示
+Route::get('/saler/workplaces/{id}', [SalerWorkplaceController::class, 'show'])->name('saler.workplaces.show')->middleware('can:access-saler');
+
+// 問屋用の施工指示保存
+Route::post('/saler/workplaces/{id}/instructions', [SalerWorkplaceController::class, 'storeInstructions'])->name('saler.workplaces.instructions.store')->middleware('can:access-saler');

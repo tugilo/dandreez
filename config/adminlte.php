@@ -374,7 +374,24 @@ return [
             'icon' => 'fas fa-fw fa-bell',
             'can'  => 'access-admin'
         ],
-
+        [
+            'header' => 'ステータス管理',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => '新規ステータス登録',
+            'url' => 'admin/statuses/create',
+            'icon' => 'fas fa-fw fa-plus-circle',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => 'ステータス一覧',
+            'url' => 'admin/statuses',
+            'icon' => 'fas fa-fw fa-list',
+            'can'  => 'access-admin'
+        ],
+    
+    
         // 得意先専用
         [
             'header' => '得意先専用',
