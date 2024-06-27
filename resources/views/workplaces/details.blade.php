@@ -1,5 +1,3 @@
-<!-- resources/views/workplaces/details.blade.php -->
-
 @extends('adminlte::page')
 
 @section('title', '施工依頼詳細設定')
@@ -79,7 +77,6 @@
             white-space: nowrap;
             text-overflow: ellipsis;
         }
-
     </style>
 @stop
 
@@ -96,48 +93,38 @@
                 language: 'ja',
                 todayHighlight: true
             });
-            
+
             // タブの表示を初期化
             $('#detailTabs a').on('click', function (e) {
                 e.preventDefault()
                 $(this).tab('show')
             });
 
-            // モーダルの画像表示
-            $('#photoModal').on('show.bs.modal', function (event) {
-                var button = $(event.relatedTarget)
-                var src = button.data('src')
-                var modal = $(this)
-                modal.find('.modal-body #modalImage').attr('src', src)
-            });
-
             // フォームを動的に追加
-            let formCount = {{ count($instructions) }} + 1;
+            let formCount = {{ count($instructions) }} + 10; // デフォルトで表示されるフォーム数
             $('#add-instruction-form').on('click', function() {
+                formCount++;
                 $('#instruction-forms').append(`
                     <tr>
                         <td class="text-right">${formCount}</td>
+                        <td><input type="text" name="instructions[${formCount - 1}][construction_location]" class="form-control"></td>
+                        <td><input type="text" name="instructions[${formCount - 1}][construction_location_detail]" class="form-control"></td>
+                        <td><input type="text" name="instructions[${formCount - 1}][product_name]" class="form-control"></td>
+                        <td><input type="text" name="instructions[${formCount - 1}][product_number]" class="form-control"></td>
+                        <td><input type="text" name="instructions[${formCount - 1}][amount]" class="form-control"></td>
                         <td>
-                            <input type="text" name="instructions[${formCount}][construction_location]" class="form-control mb-1">
-                            <input type="text" name="instructions[${formCount}][construction_location_detail]" class="form-control">
-                        </td>
-                        <td><input type="text" name="instructions[${formCount}][product_name]" class="form-control"></td>
-                        <td><input type="text" name="instructions[${formCount}][product_number]" class="form-control"></td>
-                        <td><input type="text" name="instructions[${formCount}][amount]" class="form-control"></td>
-                        <td>
-                            <select name="instructions[${formCount}][unit_id]" class="form-control" style="width: auto; min-width: 100px;">
+                            <select name="instructions[${formCount - 1}][unit_id]" class="form-control" style="width: auto; min-width: 100px;">
                                 @foreach ($units as $unit)
-                                    <option value="{{ $unit->id }}">{{ $unit->name }} m</option>
+                                    <option value="{{ $unit->id }}">{{ $unit->name }}</option>
                                 @endforeach
                             </select>
                         </td>
                     </tr>
                 `);
-                formCount++;
             });
 
             // 編集ボタンが押されたときの動作
-            $('.edit-instruction').on('click', function() {
+            $(document).on('click', '.edit-instruction', function() {
                 const row = $(this).closest('tr');
                 row.find('td.editable').each(function(index) {
                     let value = $(this).text().trim();
@@ -149,12 +136,12 @@
                     $(this).html(input);
                 });
 
-                const unitName = row.find('td:eq(7)').text().trim().replace(' m', '');
+                const unitName = row.find('td:eq(7)').text().trim();
                 const select = $('<select>', {
                     class: 'form-control unit-select',
                     style: 'width: auto; min-width: 100px;',
                     html: `@foreach ($units as $unit)
-                                <option value="{{ $unit->id }}" ${unitName === "{{ $unit->name }}" ? 'selected' : ''}>{{ $unit->name }} m</option>
+                                <option value="{{ $unit->id }}" ${unitName === "{{ $unit->name }}" ? 'selected' : ''}>{{ $unit->name }}</option>
                            @endforeach`
                 });
                 row.find('td:eq(7)').html(select);
@@ -164,7 +151,7 @@
             });
 
             // 保存ボタンが押されたときの動作
-            $('.save-instruction').on('click', function() {
+            $(document).on('click', '.save-instruction', function() {
                 const id = $(this).data('id');
                 const row = $(this).closest('tr');
                 const data = {
@@ -177,7 +164,7 @@
                     _token: '{{ csrf_token() }}'
                 };
                 $.ajax({
-                    url: `/instructions/${id}`,
+                    url: `/customer/workplaces/${id}/instructions`,
                     type: 'PUT',
                     data: data,
                     success: function(response) {
@@ -191,11 +178,11 @@
             });
 
             // 指示内容の削除
-            $('.delete-instruction').on('click', function() {
+            $(document).on('click', '.delete-instruction', function() {
                 const id = $(this).data('id');
                 if (confirm('本当に削除しますか？')) {
                     $.ajax({
-                        url: `/instructions/${id}`,
+                        url: `/customer/workplaces/${id}/instructions`,
                         type: 'DELETE',
                         data: {
                             _token: '{{ csrf_token() }}'
@@ -228,7 +215,7 @@
             updateTotalAmount();
 
             // 編集完了時に合計を更新
-            $('.save-instruction').on('click', function() {
+            $(document).on('click', '.save-instruction', function() {
                 updateTotalAmount();
             });
 

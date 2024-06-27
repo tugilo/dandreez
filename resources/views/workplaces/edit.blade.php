@@ -9,7 +9,7 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('workplaces.update', $workplace->id) }}" method="POST">
+            <form action="{{ route('customer.workplaces.update', $workplace->id) }}" method="POST">
                 @csrf
                 @method('PUT')
 

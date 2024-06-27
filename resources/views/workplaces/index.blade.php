@@ -38,13 +38,14 @@
 @section('content')
 <div class="card">
     <div class="card-header">
-        <a href="{{ route('workplaces.create') }}" class="btn btn-primary">新規作成</a>
+        <a href="{{ route('customer.workplaces.create') }}" class="btn btn-primary">新規作成</a>
     </div>
     <div class="card-body">
         <table id="workplaces-table" class="table table-bordered table-hover">
             <thead>
                 <tr>
                     <th class="btn-icon">編集</th>
+                    <th class="btn-icon">詳細</th>
                     <th>ID</th>
                     <th>得意先名</th>
                     <th>施工依頼名</th>
@@ -57,8 +58,13 @@
                 @foreach($workplaces as $workplace)
                 <tr>
                     <td>
-                        <a href="{{ route('workplaces.edit', $workplace->id) }}" class="btn btn-warning btn-sm">
+                        <a href="{{ route('customer.workplaces.edit', $workplace->id) }}" class="btn btn-warning btn-sm">
                             <i class="fas fa-pencil-alt"></i>
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{ route('customer.workplaces.details', $workplace->id) }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-eye"></i>
                         </a>
                     </td>
                     <td>{{ $workplace->id }}</td>
@@ -67,7 +73,7 @@
                     <td>{{ optional($workplace->status)->name_ja ?? 'ステータスなし' }}</td>
                     <td>{{ $workplace->created_at->format('Y-m-d') }}</td>
                     <td>
-                        <form action="{{ route('workplaces.destroy', $workplace->id) }}" method="POST" style="display:inline;">
+                        <form action="{{ route('customer.workplaces.destroy', $workplace->id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('本当に削除しますか？')">

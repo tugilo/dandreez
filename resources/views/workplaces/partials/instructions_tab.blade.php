@@ -1,5 +1,3 @@
-<!-- resources/views/workplaces/partials/instructions_tab.blade.php -->
-
 <div class="tab-pane fade show active" id="instructions" role="tabpanel" aria-labelledby="instructions-tab">
     <!-- 指示内容を追加するフォーム -->
     <form action="{{ route('instructions.store', ['id' => $workplace->id]) }}" method="POST">

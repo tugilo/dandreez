@@ -42,20 +42,43 @@ Route::prefix('admin')->middleware('auth', 'can:admin')->group(function () {
 // 得意先用のルート
 Route::prefix('customer')->middleware('auth', 'can:access-customer')->group(function () {
     Route::get('home', [CustomerController::class, 'index'])->name('customer.home');
-    Route::resource('customer_companies', CustomerCompanyController::class);
+    Route::resource('workplaces', WorkplaceController::class)->names([
+        'index' => 'customer.workplaces.index',
+        'create' => 'customer.workplaces.create',
+        'store' => 'customer.workplaces.store',
+        'show' => 'customer.workplaces.show',
+        'edit' => 'customer.workplaces.edit',
+        'update' => 'customer.workplaces.update',
+        'destroy' => 'customer.workplaces.destroy',
+    ]);
+
+    // 施工依頼の詳細ページ
+    Route::get('workplaces/{id}/details', [WorkplaceController::class, 'details'])->name('customer.workplaces.details');
+    // 指示内容の保存、更新、削除のルート
+    Route::post('workplaces/{id}/instructions', [WorkplaceController::class, 'storeInstructions'])->name('customer.instructions.store');
+    Route::put('workplaces/{id}/instructions', [WorkplaceController::class, 'updateInstruction'])->name('customer.instructions.update');
+    Route::delete('workplaces/{id}/instructions', [WorkplaceController::class, 'deleteInstruction'])->name('customer.instructions.delete');
+    Route::post('workplaces/{id}/files', [FileController::class, 'store'])->name('customer.workplaces.files.store');
+    Route::put('workplaces/{workplaceId}/files/{id}', [FileController::class, 'update'])->name('customer.workplaces.files.update');
+    Route::delete('workplaces/{workplaceId}/files/{id}', [FileController::class, 'destroy'])->name('customer.workplaces.files.destroy');
+    Route::post('workplaces/{workplaceId}/photos', [PhotoController::class, 'store'])->name('customer.workplaces.photos.store');
+    Route::put('workplaces/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('customer.workplaces.photos.update');
+    Route::delete('workplaces/{workplaceId}/photos/{id}', [PhotoController::class, 'destroy'])->name('customer.workplaces.photos.destroy');
 });
 
 // 問屋用のルート
 Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function () {
     Route::get('home', [SalerController::class, 'index'])->name('saler.home');
     Route::resource('saler_companies', SalerCompanyController::class);
-    Route::get('workplaces', [SalerWorkplaceController::class, 'index'])->name('saler.workplaces.index');
-    Route::get('workplaces/create', [SalerWorkplaceController::class, 'create'])->name('saler.workplaces.create');
-    Route::post('workplaces', [SalerWorkplaceController::class, 'store'])->name('saler.workplaces.store');
-    Route::get('workplaces/{id}/edit', [SalerWorkplaceController::class, 'edit'])->name('saler.workplaces.edit');
-    Route::put('workplaces/{id}', [SalerWorkplaceController::class, 'update'])->name('saler.workplaces.update');
-    Route::delete('workplaces/{id}', [SalerWorkplaceController::class, 'destroy'])->name('saler.workplaces.destroy');
-    Route::get('workplaces/{id}', [SalerWorkplaceController::class, 'show'])->name('saler.workplaces.show');
+    Route::resource('workplaces', SalerWorkplaceController::class)->names([
+        'index' => 'saler.workplaces.index',
+        'create' => 'saler.workplaces.create',
+        'store' => 'saler.workplaces.store',
+        'show' => 'saler.workplaces.show',
+        'edit' => 'saler.workplaces.edit',
+        'update' => 'saler.workplaces.update',
+        'destroy' => 'saler.workplaces.destroy'
+    ]);
     Route::post('workplaces/{id}/instructions', [SalerWorkplaceController::class, 'storeInstructions'])->name('saler.workplaces.instructions.store');
 });
 
@@ -67,7 +90,6 @@ Route::prefix('worker')->middleware('auth', 'can:access-worker')->group(function
 
 // Workplace用のルート
 Route::prefix('workplaces')->middleware('auth')->group(function () {
-    Route::resource('/', WorkplaceController::class);
     Route::post('{id}/instructions', [WorkplaceController::class, 'storeInstructions'])->name('instructions.store');
     Route::put('{id}/instructions', [WorkplaceController::class, 'updateInstruction'])->name('instructions.update');
     Route::delete('{id}/instructions', [WorkplaceController::class, 'deleteInstruction'])->name('instructions.delete');

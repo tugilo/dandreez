@@ -9,7 +9,7 @@
 @section('content')
 <div class="card">
     <div class="card-body">
-        <form action="{{ route('workplaces.store') }}" method="POST">
+        <form action="{{ route('customer.workplaces.store') }}" method="POST">
             @csrf
 
             <!-- 問屋の選択 -->

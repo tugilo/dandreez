@@ -279,18 +279,6 @@ return [
     'laravel_mix_css_path' => 'css/app.css',
     'laravel_mix_js_path' => 'js/app.js',
 
-    /*
-    |--------------------------------------------------------------------------
-    | Menu Items
-    |--------------------------------------------------------------------------
-    |
-    | Here we can modify the sidebar/top navigation of the admin panel.
-    |
-    | For detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Menu-Configuration
-    |
-    */
-
     'menu' => [
         // Admin専用
         [
@@ -325,7 +313,6 @@ return [
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-admin'
         ],
-
         [
             'header' => '問屋会社管理',
             'can'  => 'access-admin'
@@ -390,8 +377,7 @@ return [
             'icon' => 'fas fa-fw fa-list',
             'can'  => 'access-admin'
         ],
-    
-    
+
         // 得意先専用
         [
             'header' => '得意先専用',
@@ -399,13 +385,13 @@ return [
         ],
         [
             'text' => '新規施工依頼登録',
-            'url' => 'workplaces/create',
+            'url' => 'customer/workplaces/create',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-customer'
         ],
         [
             'text' => '施工依頼一覧',
-            'url' => 'workplaces',
+            'url' => 'customer/workplaces',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-customer'
         ],

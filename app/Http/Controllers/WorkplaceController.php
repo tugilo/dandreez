@@ -157,6 +157,46 @@ class WorkplaceController extends Controller
     }
     
 
+    /**
+     * 指示内容を更新するメソッド
+     */
+    public function updateInstruction(Request $request, $id)
+    {
+        // バリデーション
+        $validated = $request->validate([
+            'construction_location' => 'required|string|max:255',
+            'construction_location_detail' => 'nullable|string|max:255',
+            'product_name' => 'required|string|max:255',
+            'product_number' => 'nullable|string|max:255',
+            'amount' => 'nullable|numeric|min:0',
+            'unit_id' => 'required|exists:units,id',
+        ]);
+
+        // 指示内容の取得と更新
+        $instruction = Instruction::findOrFail($id);
+        $instruction->update($validated);
+
+        Log::info('指示内容が更新されました。', ['instruction_id' => $id]);
+
+        return response()->json(['success' => '指示内容が更新されました。']);
+    }
+    
+    /**
+     * 指示内容を削除するメソッド（論理削除）
+     */
+    public function deleteInstruction($id)
+    {
+        // 指示内容の取得
+        $instruction = Instruction::findOrFail($id);
+        
+        // 論理削除のためにshow_flgを0に設定
+        $instruction->show_flg = 0;
+        $instruction->save();
+
+        Log::info('指示内容が削除されました。', ['instruction_id' => $id]);
+
+        return response()->json(['success' => '指示内容が削除されました。']);
+    }
 
     /**
      * 施工依頼の編集フォームを表示
