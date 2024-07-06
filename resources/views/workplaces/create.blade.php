@@ -9,19 +9,38 @@
 @section('content')
 <div class="card">
     <div class="card-body">
-        <form action="{{ route('customer.workplaces.store') }}" method="POST">
+        <form action="{{ route($storeRoute) }}" method="POST">
             @csrf
 
+            <!-- 得意先の選択 -->
+            @if ($role === 'saler')
+                <div class="form-group">
+                    <label for="customer_id">得意先 <span class="badge bg-danger">必須</span></label>
+                    <select id="customer_id" class="form-control" name="customer_id" required>
+                        <option value="">選択してください</option>
+                        @foreach ($customers as $customer)
+                            <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @else
+                <input type="hidden" name="customer_id" value="{{ Auth::user()->customerStaff->customer_id }}">
+            @endif
+
             <!-- 問屋の選択 -->
-            <div class="form-group">
-                <label for="saler_id">問屋 <span class="badge bg-danger">必須</span></label>
-                <select id="saler_id" class="form-control" name="saler_id" required>
-                    <option value="">選択してください</option>
-                    @foreach ($salers as $saler)
-                        <option value="{{ $saler->id }}">{{ $saler->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+            @if ($role === 'customer')
+                <div class="form-group">
+                    <label for="saler_id">問屋 <span class="badge bg-danger">必須</span></label>
+                    <select id="saler_id" class="form-control" name="saler_id" required>
+                        <option value="">選択してください</option>
+                        @foreach ($salers as $saler)
+                            <option value="{{ $saler->id }}">{{ $saler->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @else
+                <input type="hidden" name="saler_id" value="{{ Auth::user()->salerStaff->saler_id }}">
+            @endif
 
             <!-- 施工名 -->
             <div class="form-group">

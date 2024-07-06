@@ -4,94 +4,138 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Models\Photo;
-use App\Models\Workplace;
+use Carbon\Carbon;
+
 
 class PhotoController extends Controller
 {
-
     /**
-     * 写真を保存するメソッド
+     * 写真をアップロードして保存する
      *
-     * @param \Illuminate\Http\Request $request リクエスト
-     * @param int $workplaceId 施工依頼のID
-     * @return \Illuminate\Http\RedirectResponse リダイレクトレスポンス
+     * @param \Illuminate\Http\Request $request
+     * @param string $role ユーザーの役割（customerまたはsaler）
+     * @param int $workplaceId 施工依頼ID
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request, $workplaceId)
+    public function store(Request $request, $role, $workplaceId)
     {
-        // バリデーション
         $validated = $request->validate([
-            'photos.*.file' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'workplace_id' => 'required|exists:workplaces,id',
+            'photos.*.file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048',
             'photos.*.title' => 'nullable|string|max:255',
-            'photos.*.comment' => 'nullable|string',
+            'photos.*.comment' => 'nullable|string|max:255',
         ]);
-
-        $workplace = Workplace::findOrFail($workplaceId);
-        $parent_directory = 'instructions/photos/';
-
-        foreach ($request->photos as $photoInput) {
-            if (isset($photoInput['file'])) {
-                $file = $photoInput['file'];
-                $directory = now()->format('Y/m') . '/' . $workplace->id . '/';
-                $filename = 'photo_' . $workplace->id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-
-                // ディレクトリが存在しない場合は作成
-                if (!Storage::exists($parent_directory . $directory)) {
-                    Storage::makeDirectory($parent_directory . $directory);
+    
+        Log::info('Photo store request data:', $request->all());
+    
+        $photoPaths = [];
+    
+        if (isset($validated['photos'])) {
+            foreach ($validated['photos'] as $photoData) {
+                if (isset($photoData['file']) && $photoData['file']->isValid()) {
+                    $user_id = Auth::id();
+                    $timestamp = time();
+                    $random = bin2hex(random_bytes(8)); // 16桁のランダムな文字列
+                    $fileName = 'photo_' . $user_id . '_' . $timestamp . '_' . $random . '.' . $photoData['file']->getClientOriginalExtension();
+    
+                    $datePath = Carbon::now()->format('Y/m/d');
+                    $fullPath = 'public/instructions/photos/' . $datePath;
+    
+                    // ディレクトリを作成
+                    Storage::makeDirectory($fullPath);
+    
+                    $photoData['file']->storeAs($fullPath, $fileName);
+    
+                    $photo = new Photo([
+                        'workplace_id' => $validated['workplace_id'],
+                        'title' => $photoData['title'] ?? null,
+                        'comment' => $photoData['comment'] ?? null,
+                        'file_name' => $fileName,
+                        'directory' => $datePath . '/',
+                    ]);
+                    $photo->save();
+                    $photoPaths[] = $fullPath . '/' . $fileName;
                 }
-
-                // ファイルを保存
-                $file->storeAs($parent_directory . $directory, $filename, 'public');
-
-                // DBにレコードを作成
-                Photo::create([
-                    'workplace_id' => $workplace->id,
-                    'file_name' => $filename,
-                    'directory' => $directory,
-                    'title' => $photoInput['title'] ?? null,
-                    'comment' => $photoInput['comment'] ?? null,
-                ]);
             }
         }
-
-        return redirect()->route('workplaces.details', ['id' => $workplace->id])->with('success', '写真がアップロードされました。');
-    }
-
-
-    /**
-     * 写真を削除（show_flgを0に設定）するメソッド
-     *
-     * @param int $workplaceId 施工依頼のID
-     * @param int $id 写真のID
-     * @return \Illuminate\Http\RedirectResponse リダイレクトレスポンス
-     */
-    public function destroy($workplaceId, $id)
-    {
-        $photo = Photo::findOrFail($id);
-        $photo->show_flg = 0; // フラグを0に設定
-        $photo->save();
-
-        return redirect()->back()->with('success', '写真が削除されました。');
+    
+        Log::info('写真がアップロードされました。', ['paths' => $photoPaths]);
+    
+        return redirect()->route($this->getRoutesByRole($role)['detailsRoute'], ['role' => $role, 'id' => $workplaceId])->with('success', '写真がアップロードされました。');
     }
     
+    
     /**
-     * 写真のタイトルとコメントを更新するメソッド
+     * 写真の更新
      *
-     * @param \Illuminate\Http\Request $request リクエスト
-     * @param int $workplaceId 施工依頼のID
-     * @param int $id 写真のID
-     * @return \Illuminate\Http\RedirectResponse リダイレクトレスポンス
+     * @param \Illuminate\Http\Request $request
+     * @param string $role ユーザーの役割（customerまたはsaler）
+     * @param int $workplaceId 施工依頼ID
+     * @param int $id 写真ID
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request, $workplaceId, $id)
+    public function update(Request $request, $role, $workplaceId, $id)
     {
+        $request->validate([
+            'title' => 'nullable|string|max:255',
+            'comment' => 'nullable|string|max:255',
+        ]);
+
         $photo = Photo::findOrFail($id);
+        $photo->update($request->only('title', 'comment'));
 
-        // タイトルとコメントの更新
-        $photo->title = $request->input('title');
-        $photo->comment = $request->input('comment');
-        $photo->save();
+        Log::info('写真のタイトル・コメントがが更新されました。', ['photo_id' => $id]);
 
-        return redirect()->route('workplaces.details', ['id' => $workplaceId])->with('success', '写真の情報が更新されました。');
+        return redirect()->route($this->getRoutesByRole($role)['detailsRoute'], ['role' => $role, 'id' => $workplaceId])->with('success', '写真のタイトル・コメントがが更新されました。');
     }
 
+    /**
+     * 写真の削除
+     *
+     * @param string $role ユーザーの役割（customerまたはsaler）
+     * @param int $workplaceId 施工依頼ID
+     * @param int $id 写真ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy($role, $workplaceId, $id)
+    {
+        $photo = Photo::findOrFail($id);
+        $photo->show_flg = 0;
+        $photo->save();
+    
+        Log::info('写真が論理削除されました。', ['photo_id' => $id]);
+    
+        return redirect()->route($this->getRoutesByRole($role)['detailsRoute'], ['role' => $role, 'id' => $workplaceId])->with('success', '写真が削除されました。');
+    }
+    /**
+     * 役割に応じたルートを取得するヘルパーメソッド
+     *
+     * @param string $role ユーザーの役割（customerまたはsaler）
+     * @return array
+     */
+    // PhotoController.php
+    private function getRoutesByRole($role)
+    {
+        switch ($role) {
+            case 'customer':
+                return [
+                    'storeRoute' => 'customer.workplaces.photos.store',
+                    'updateRoute' => 'customer.workplaces.photos.update',
+                    'destroyRoute' => 'customer.workplaces.photos.destroy',
+                    'detailsRoute' => 'customer.workplaces.details',
+                ];
+            case 'saler':
+                return [
+                    'storeRoute' => 'saler.workplaces.photos.store',
+                    'updateRoute' => 'saler.workplaces.photos.update',
+                    'destroyRoute' => 'saler.workplaces.photos.destroy',
+                    'detailsRoute' => 'saler.workplaces.details',
+                ];
+            default:
+                abort(404);
+        }
+    }
 }

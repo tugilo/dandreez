@@ -1,6 +1,10 @@
+@php
+    Log::info('Instructions Tab Data:', ['instructions' => $instructions, 'role' => $role, 'storeRoute' => $storeRoute, 'updateRoute' => $updateRoute, 'destroyRoute' => $destroyRoute]);
+@endphp
+
 <div class="tab-pane fade show active" id="instructions" role="tabpanel" aria-labelledby="instructions-tab">
     <!-- 指示内容を追加するフォーム -->
-    <form action="{{ route('instructions.store', ['id' => $workplace->id]) }}" method="POST">
+    <form action="{{ route($instructionsStoreRoute, ['role' => $role, 'id' => $workplace->id]) }}" method="POST">
         @csrf
         <input type="hidden" name="workplace_id" value="{{ $workplace->id }}">
         <div style="max-height: 300px; overflow-y: auto;">
@@ -89,7 +93,7 @@
             <tfoot>
                 <tr>
                     <th colspan="6" class="text-right">クロス合計m数</th>
-                    <th class="text-right" id="total-amount"></th>
+                    <th class="text-right">{{ $totalAmount }}ｍ</th>
                     <th colspan="2"></th>
                 </tr>
             </tfoot>

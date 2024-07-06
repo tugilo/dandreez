@@ -401,6 +401,12 @@ return [
             'can'  => 'access-saler'
         ],
         [
+            'text' => '新規施工依頼登録',
+            'url'  => 'saler/workplaces/create',
+            'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-saler',
+        ],
+        [
             'text' => '施工依頼一覧',
             'url'  => 'saler/workplaces',
             'icon' => 'fas fa-fw fa-list',

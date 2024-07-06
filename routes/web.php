@@ -1,24 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\AdminController;
+use App\Http\Controllers\WorkplaceController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SalerController;
-use App\Http\Controllers\WorkerController;
-use App\Http\Controllers\CustomerCompanyController;
-use App\Http\Controllers\SalerCompanyController;
-use App\Http\Controllers\ConstructionCompanyController;
-use App\Http\Controllers\WorkplaceController;
-use App\Http\Controllers\InstructionController;
-use App\Http\Controllers\PhotoController;
-use App\Http\Controllers\FileController;
-use App\Http\Controllers\NotificationContentController;
-use App\Http\Controllers\SalerWorkplaceController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\StatusController;
+use App\Http\Controllers\FileController;
+use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\WorkerController;
+use App\Http\Controllers\NotificationContentController;
 
 // 標準の認証ルート（ログイン、ログアウト、パスワードリセット）
 Auth::routes();
@@ -42,64 +35,49 @@ Route::prefix('admin')->middleware('auth', 'can:admin')->group(function () {
 // 得意先用のルート
 Route::prefix('customer')->middleware('auth', 'can:access-customer')->group(function () {
     Route::get('home', [CustomerController::class, 'index'])->name('customer.home');
-    Route::resource('workplaces', WorkplaceController::class)->names([
-        'index' => 'customer.workplaces.index',
-        'create' => 'customer.workplaces.create',
-        'store' => 'customer.workplaces.store',
-        'show' => 'customer.workplaces.show',
-        'edit' => 'customer.workplaces.edit',
-        'update' => 'customer.workplaces.update',
-        'destroy' => 'customer.workplaces.destroy',
-    ]);
-
-    // 施工依頼の詳細ページ
-    Route::get('workplaces/{id}/details', [WorkplaceController::class, 'details'])->name('customer.workplaces.details');
-    // 指示内容の保存、更新、削除のルート
-    Route::post('workplaces/{id}/instructions', [WorkplaceController::class, 'storeInstructions'])->name('customer.instructions.store');
-    Route::put('workplaces/{id}/instructions', [WorkplaceController::class, 'updateInstruction'])->name('customer.instructions.update');
-    Route::delete('workplaces/{id}/instructions', [WorkplaceController::class, 'deleteInstruction'])->name('customer.instructions.delete');
-    Route::post('workplaces/{id}/files', [FileController::class, 'store'])->name('customer.workplaces.files.store');
-    Route::put('workplaces/{workplaceId}/files/{id}', [FileController::class, 'update'])->name('customer.workplaces.files.update');
-    Route::delete('workplaces/{workplaceId}/files/{id}', [FileController::class, 'destroy'])->name('customer.workplaces.files.destroy');
-    Route::post('workplaces/{workplaceId}/photos', [PhotoController::class, 'store'])->name('customer.workplaces.photos.store');
-    Route::put('workplaces/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('customer.workplaces.photos.update');
-    Route::delete('workplaces/{workplaceId}/photos/{id}', [PhotoController::class, 'destroy'])->name('customer.workplaces.photos.destroy');
+    Route::get('workplaces', [WorkplaceController::class, 'index'])->name('customer.workplaces.index')->defaults('role', 'customer');
+    Route::get('workplaces/create', [WorkplaceController::class, 'create'])->name('customer.workplaces.create')->defaults('role', 'customer');
+    Route::post('workplaces', [WorkplaceController::class, 'store'])->name('customer.workplaces.store')->defaults('role', 'customer');
+    Route::get('workplaces/{role}/{id}/edit', [WorkplaceController::class, 'edit'])->name('customer.workplaces.edit')->defaults('role', 'customer');
+    Route::put('workplaces/{role}/{id}', [WorkplaceController::class, 'update'])->name('customer.workplaces.update')->defaults('role', 'customer');
+    Route::delete('workplaces/{id}', [WorkplaceController::class, 'destroy'])->name('customer.workplaces.destroy')->defaults('role', 'customer');
+    Route::get('workplaces/{role}/{id}/details', [WorkplaceController::class, 'details'])->name('customer.workplaces.details');
+    Route::post('workplaces/{role}/{id}/instructions', [WorkplaceController::class, 'storeInstructions'])->name('customer.workplaces.instructions.store')->defaults('role', 'customer');
+    Route::put('workplaces/{role}/{id}/instructions', [WorkplaceController::class, 'updateInstruction'])->name('customer.workplaces.instructions.update')->defaults('role', 'customer');
+    Route::delete('workplaces/{role}/{id}/instructions', [WorkplaceController::class, 'deleteInstruction'])->name('customer.workplaces.instructions.delete')->defaults('role', 'customer');
+    Route::post('workplaces/{role}/{workplaceId}/files', [FileController::class, 'store'])->name('customer.workplaces.files.store')->defaults('role', 'customer');
+    Route::put('workplaces/{role}/{workplaceId}/files/{id}', [FileController::class, 'update'])->name('customer.workplaces.files.update')->defaults('role', 'customer');
+    Route::delete('workplaces/{role}/{workplaceId}/files/{id}', [FileController::class, 'destroy'])->name('customer.workplaces.files.destroy')->defaults('role', 'customer');
+    Route::post('workplaces/{role}/{workplaceId}/photos', [PhotoController::class, 'store'])->name('customer.workplaces.photos.store')->defaults('role', 'customer');
+    Route::put('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('customer.workplaces.photos.update')->defaults('role', 'customer');
+    Route::delete('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'destroy'])->name('customer.workplaces.photos.destroy')->defaults('role', 'customer');
 });
 
 // 問屋用のルート
 Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function () {
     Route::get('home', [SalerController::class, 'index'])->name('saler.home');
-    Route::resource('saler_companies', SalerCompanyController::class);
-    Route::resource('workplaces', SalerWorkplaceController::class)->names([
-        'index' => 'saler.workplaces.index',
-        'create' => 'saler.workplaces.create',
-        'store' => 'saler.workplaces.store',
-        'show' => 'saler.workplaces.show',
-        'edit' => 'saler.workplaces.edit',
-        'update' => 'saler.workplaces.update',
-        'destroy' => 'saler.workplaces.destroy'
-    ]);
-    Route::post('workplaces/{id}/instructions', [SalerWorkplaceController::class, 'storeInstructions'])->name('saler.workplaces.instructions.store');
+    Route::get('workplaces', [WorkplaceController::class, 'index'])->name('saler.workplaces.index')->defaults('role', 'saler');
+    Route::get('workplaces/create', [WorkplaceController::class, 'create'])->name('saler.workplaces.create')->defaults('role', 'saler');
+    Route::post('workplaces', [WorkplaceController::class, 'store'])->name('saler.workplaces.store')->defaults('role', 'saler');
+    Route::get('workplaces/{role}/{id}/edit', [WorkplaceController::class, 'edit'])->name('saler.workplaces.edit')->defaults('role', 'saler');
+    Route::put('workplaces/{role}/{id}', [WorkplaceController::class, 'update'])->name('saler.workplaces.update')->defaults('role', 'saler');
+    Route::delete('workplaces/{id}', [WorkplaceController::class, 'destroy'])->name('saler.workplaces.destroy')->defaults('role', 'saler');
+    Route::get('workplaces/{role}/{id}/details', [WorkplaceController::class, 'details'])->name('saler.workplaces.details')->defaults('role', 'saler');
+    Route::post('workplaces/{role}/{id}/instructions', [WorkplaceController::class, 'storeInstructions'])->name('saler.workplaces.instructions.store')->defaults('role', 'saler');
+    Route::put('workplaces/{role}/{id}/instructions', [WorkplaceController::class, 'updateInstruction'])->name('saler.workplaces.instructions.update')->defaults('role', 'saler');
+    Route::delete('workplaces/{role}/{id}/instructions', [WorkplaceController::class, 'deleteInstruction'])->name('saler.workplaces.instructions.delete')->defaults('role', 'saler');
+    Route::post('workplaces/{role}/{workplaceId}/files', [FileController::class, 'store'])->name('saler.workplaces.files.store')->defaults('role', 'saler');
+    Route::put('workplaces/{role}/{workplaceId}/files/{id}', [FileController::class, 'update'])->name('saler.workplaces.files.update')->defaults('role', 'saler');
+    Route::delete('workplaces/{role}/{workplaceId}/files/{id}', [FileController::class, 'destroy'])->name('saler.workplaces.files.destroy')->defaults('role', 'saler');
+    Route::post('workplaces/{role}/{workplaceId}/photos', [PhotoController::class, 'store'])->name('saler.workplaces.photos.store')->defaults('role', 'saler');
+    Route::put('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('saler.workplaces.photos.update')->defaults('role', 'saler');
+    Route::delete('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'destroy'])->name('saler.workplaces.photos.destroy')->defaults('role', 'saler');
 });
 
 // 施工業者用のルート
 Route::prefix('worker')->middleware('auth', 'can:access-worker')->group(function () {
     Route::get('home', [WorkerController::class, 'index'])->name('worker.home');
     Route::resource('construction_companies', ConstructionCompanyController::class);
-});
-
-// Workplace用のルート
-Route::prefix('workplaces')->middleware('auth')->group(function () {
-    Route::post('{id}/instructions', [WorkplaceController::class, 'storeInstructions'])->name('instructions.store');
-    Route::put('{id}/instructions', [WorkplaceController::class, 'updateInstruction'])->name('instructions.update');
-    Route::delete('{id}/instructions', [WorkplaceController::class, 'deleteInstruction'])->name('instructions.delete');
-    Route::post('{id}/files', [FileController::class, 'store'])->name('files.store');
-    Route::put('{workplaceId}/files/{id}', [FileController::class, 'update'])->name('files.update');
-    Route::delete('{workplaceId}/files/{id}', [FileController::class, 'destroy'])->name('files.destroy');
-    Route::post('{workplaceId}/photos', [PhotoController::class, 'store'])->name('photos.store');
-    Route::put('{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('photos.update');
-    Route::delete('{workplaceId}/photos/{id}', [PhotoController::class, 'destroy'])->name('photos.destroy');
-    Route::get('{id}/details', [WorkplaceController::class, 'details'])->name('workplaces.details');
 });
 
 // NotificationContent用のルート

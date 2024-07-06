@@ -120,4 +120,25 @@ class FileController extends Controller
 
         return redirect()->route('workplaces.details', ['id' => $workplaceId])->with('success', '添付書類の情報が更新されました。');
     }
+
+    // FileController.php
+    private function getRoutesByRole($role)
+    {
+        switch ($role) {
+            case 'customer':
+                return [
+                    'storeRoute' => 'customer.workplaces.files.store',
+                    'updateRoute' => 'customer.workplaces.files.update',
+                    'destroyRoute' => 'customer.workplaces.files.destroy',
+                ];
+            case 'saler':
+                return [
+                    'storeRoute' => 'saler.workplaces.files.store',
+                    'updateRoute' => 'saler.workplaces.files.update',
+                    'destroyRoute' => 'saler.workplaces.files.destroy',
+                ];
+            default:
+                abort(404);
+        }
+    }
 }

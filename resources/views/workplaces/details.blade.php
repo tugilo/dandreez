@@ -29,7 +29,20 @@
             <p><strong>施工期間:</strong> {{ $workplace->construction_start }} ～ {{ $workplace->construction_end }}</p>
         </div>
 
-        @include('workplaces.partials.details_tabs')
+        @include('workplaces.partials.details_tabs', [
+            'workplace' => $workplace,
+            'instructions' => $instructions,
+            'photos' => $photos,
+            'files' => $files,
+            'units' => $units,
+            'role' => $role,
+            'storeRoute' => $storeRoute,
+            'updateRoute' => $updateRoute,
+            'destroyRoute' => $destroyRoute,
+            'instructionsStoreRoute' => $instructionsStoreRoute,
+            'photoStoreRoute' => $photoStoreRoute,
+            'fileStoreRoute' => $fileStoreRoute,
+        ])
     </div>
 </div>
 @stop
@@ -96,9 +109,12 @@
 
             // タブの表示を初期化
             $('#detailTabs a').on('click', function (e) {
-                e.preventDefault()
-                $(this).tab('show')
+                e.preventDefault();
+                $(this).tab('show');
             });
+
+            // 最初のタブを表示
+            $('#detailTabs a:first').tab('show');
 
             // フォームを動的に追加
             let formCount = {{ count($instructions) }} + 10; // デフォルトで表示されるフォーム数
@@ -164,7 +180,7 @@
                     _token: '{{ csrf_token() }}'
                 };
                 $.ajax({
-                    url: `/customer/workplaces/${id}/instructions`,
+                    url: `/{{ $role }}/workplaces/{{ $role}}/${id}/instructions`,
                     type: 'PUT',
                     data: data,
                     success: function(response) {
@@ -182,15 +198,14 @@
                 const id = $(this).data('id');
                 if (confirm('本当に削除しますか？')) {
                     $.ajax({
-                        url: `/customer/workplaces/${id}/instructions`,
+                        url: `/{{ $role }}/workplaces/{{ $role}}/${id}/instructions`,
                         type: 'DELETE',
                         data: {
                             _token: '{{ csrf_token() }}'
                         },
                         success: function(response) {
-                            $(`tr[data-id="${id}"]`).remove();
-                            updateTotalAmount(); // 削除後に合計を更新
                             alert('指示内容が削除されました。');
+                            location.reload(); // 更新が成功したらページをリロード
                         },
                         error: function(response) {
                             alert('削除に失敗しました。');
@@ -235,7 +250,88 @@
                     reader.readAsDataURL(files[0]);
                 }
             });
+            $('#photoModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var src = button.data('src');
+                var modal = $(this);
+                modal.find('.modal-body #modalImage').attr('src', src);
+            });
 
+            // 写真の削除
+            $(document).on('click', '.delete-photo', function() {
+                const photoId = $(this).data('id');
+                if (confirm('本当に削除しますか？')) {
+                    $.ajax({
+                        url: `/{{ $role }}/photos/${photoId}`,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            alert('写真が削除されました。');
+                            location.reload(); // 削除が成功したらページをリロード
+                        },
+                        error: function(response) {
+                            alert('削除に失敗しました。');
+                        }
+                    });
+                }
+            });
+
+            // 写真の編集
+            $(document).on('click', '.edit-photo', function() {
+                var photoId = $(this).data('id');
+                $('#edit-photo-form-' + photoId).show();
+                $(this).hide();
+            });
+
+            // キャンセルボタンの動作
+            $(document).on('click', '.cancel-edit', function() {
+                var photoId = $(this).data('id');
+                $('#edit-photo-form-' + photoId).hide();
+                $('.edit-photo[data-id="' + photoId + '"]').show();
+            });
+
+            // ファイルの削除
+            $(document).on('click', '.delete-file', function() {
+                const fileId = $(this).data('id');
+                if (confirm('本当に削除しますか？')) {
+                    $.ajax({
+                        url: `/{{ $role }}/files/${fileId}`,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            alert('ファイルが削除されました。');
+                            location.reload(); // 削除が成功したらページをリロード
+                        },
+                        error: function(response) {
+                            alert('削除に失敗しました。');
+                        }
+                    });
+                }
+            });
+            // ファイルの削除
+            $(document).on('click', '.delete-file', function() {
+                const fileId = $(this).data('id');
+                if (confirm('本当に削除しますか？')) {
+                    $.ajax({
+                        url: `/{{ $role }}/files/${fileId}`,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            alert('ファイルが削除されました。');
+                            location.reload(); // 削除が成功したらページをリロード
+                        },
+                        error: function(response) {
+                            alert('削除に失敗しました。');
+                        }
+                    });
+                }
+            });
             // タブの選択状態を保存
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
                 localStorage.setItem('activeTab', $(e.target).attr('href'));
@@ -246,6 +342,7 @@
             if(activeTab){
                 $('#detailTabs a[href="' + activeTab + '"]').tab('show');
             }
+
         });
     </script>
 @stop
