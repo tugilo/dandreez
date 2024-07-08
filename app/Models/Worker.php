@@ -40,5 +40,11 @@ class Worker extends Model
     {
         return $this->morphMany(NotificationRecipient::class, 'recipient');
     }
+    
+    // Assign（割り当て）とのリレーション
+    public function assigns()
+    {
+        return $this->hasMany(Assign::class);
+    }
 
 }

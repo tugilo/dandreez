@@ -18,4 +18,9 @@ class ConstructionCompany extends Model
     {
         return $this->hasMany(Worker::class);
     }
+    // Assign（割り当て）とのリレーション
+    public function assigns()
+    {
+        return $this->hasMany(Assign::class);
+    }
 }

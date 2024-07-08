@@ -47,14 +47,16 @@
                     <th class="btn-icon">詳細</th>
                     @if($role === 'saler')
                         <th class="btn-icon">承認</th>
+                        <th class="btn-icon">アサイン</th>
                     @endif
                     <th>ID</th>
                     <th>得意先名</th>
                     <th>施工依頼名</th>
+                    <th>施工期間</th>
                     <th>ステータス</th>
                     <th>作成日</th>
                     <th class="btn-icon">削除</th>
-                        </tr>
+                </tr>
                 </thead>
                 <tbody>
                 @foreach ($workplaces as $workplace)
@@ -73,10 +75,22 @@
                             <td>
                                 <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#approveModal-{{ $workplace->id }}">承認</button>
                             </td>
+                            <td>
+                                @if($workplace->assignedWorkers->isNotEmpty())
+                                    <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#assignModal-{{ $workplace->id }}">
+                                        <i class="fas fa-check-circle"></i> アサイン
+                                    </button>
+                                @else
+                                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#assignModal-{{ $workplace->id }}">
+                                        <i class="fas fa-user-plus"></i> アサイン
+                                    </button>
+                                @endif
+                            </td>
                         @endif
                         <td>{{ $workplace->id }}</td>
                         <td>{{ $workplace->customer->name }}</td>
                         <td>{{ $workplace->name }}</td>
+                        <td>{{ $workplace->construction_start->format('Y/m/d') }} 〜 {{ $workplace->construction_end->format('Y/m/d') }}</td> <!-- 新しく追加 -->
                         <td class="text-center">
                             <span class="badge {{ $workplace->status->color }} p-2" style="width: 80px; display: inline-block; text-align: center;">{{ $workplace->status->name_ja }}</span>
                         </td>
@@ -124,14 +138,90 @@
                             @csrf
                             <button type="submit" class="btn btn-danger">拒否</button>
                         </form>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
                     </div>
+                </div>
+            </div>
         </div>
+        
+        <!-- アサインモーダル -->
+        <div class="modal fade" id="assignModal-{{ $workplace->id }}" tabindex="-1" role="dialog" aria-labelledby="assignModalLabel-{{ $workplace->id }}" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="assignModalLabel-{{ $workplace->id }}">施工依頼アサイン</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>現在のアサイン</label>
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>施工会社</th>
+                                        <th>職人</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($workplace->assignedWorkers as $assign)
+                                        <tr>
+                                            <td>{{ $assign->constructionCompany->name }}</td>
+                                            <td>{{ $assign->worker->name }}</td>
+                                            <td>
+                                                <form action="{{ route('saler.workplaces.unassign', ['id' => $workplace->id, 'role' => $role]) }}" method="POST">
+                                                    @csrf
+                                                    <input type="hidden" name="assign_id" value="{{ $assign->id }}">
+                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('このアサインを解除してもよろしいですか？')">解除</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3">現在アサインされている職人はいません。</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        <form id="assignForm-{{ $workplace->id }}" action="{{ route($role . '.workplaces.assign.store', ['role' => $role, 'id' => $workplace->id]) }}" method="POST">
+                            @csrf
+                            <div class="form-group">
+                                <label for="construction_company_{{ $workplace->id }}">施工会社</label>
+                                <select name="construction_company_id" id="construction_company_{{ $workplace->id }}" class="form-control">
+                                    @foreach($constructionCompanies as $company)
+                                        <option value="{{ $company->id }}">{{ $company->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>職人</label>
+                                @foreach($workers as $worker)
+                                    <div class="form-check">
+                                        <input class="form-check-input worker-checkbox" type="checkbox" name="worker_ids[]" value="{{ $worker->id }}" id="worker{{ $worker->id }}_{{ $workplace->id }}" data-workplace-id="{{ $workplace->id }}" data-worker-id="{{ $worker->id }}">
+                                        <label class="form-check-label" for="worker{{ $worker->id }}_{{ $workplace->id }}">
+                                            {{ $worker->name }}
+                                        </label>
+                                        <span class="overlap-warning" id="workerOverlapWarning{{ $worker->id }}_{{ $workplace->id }}" style="display:none; color: red;">
+                                            (重複)
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary" id="assignButton-{{ $workplace->id }}">アサインする</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
         @endif
     @endforeach
-
 @stop
 
 @section('js')
@@ -144,7 +234,91 @@
                     "url": "//cdn.datatables.net/plug-ins/1.11.3/i18n/ja.json"
                 }
             });
+
+            $('.worker-checkbox').change(function() {
+                const workplaceId = $(this).data('workplace-id');
+                checkOverlap(workplaceId);
+            });
+
+            function checkOverlap(workplaceId) {
+                const form = $(`#assignForm-${workplaceId}`);
+                const workerIds = form.find('input[name="worker_ids[]"]').map(function() {
+                    return this.value;
+                }).get();
+
+                const workplace = {!! json_encode($workplaces) !!}.find(w => w.id == workplaceId);
+
+                $.ajax({
+                    url: '{{ route("workplaces.check-overlap") }}',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        workplace_id: workplaceId,
+                        worker_ids: workerIds,
+                        start_date: workplace.construction_start,
+                        end_date: workplace.construction_end
+                    },
+                    success: function(response) {
+                        let hasAvailableWorker = false;
+                        let hasOverlappingWorker = false;
+                        const overlappingWorkerIds = response.overlappingWorkerIds || [];
+                        const assignedWorkerIds = response.assignedWorkerIds || [];
+
+                        form.find('input[name="worker_ids[]"]').each(function() {
+                            const workerId = parseInt($(this).data('worker-id'));
+                            const isOverlapping = overlappingWorkerIds.includes(workerId);
+                            const isAssigned = assignedWorkerIds.includes(workerId);
+                            const warningSpan = $(`#workerOverlapWarning${workerId}_${workplaceId}`);
+                            
+                            if (isAssigned) {
+                                $(this).prop('disabled', false);
+                                $(this).prop('checked', true);
+                                warningSpan.text('(割当済)').show();
+                                hasAvailableWorker = true;
+                            } else if (isOverlapping) {
+                                $(this).prop('disabled', true);
+                                $(this).prop('checked', false);
+                                warningSpan.text('(重複)').show();
+                                hasOverlappingWorker = true;
+                            } else {
+                                $(this).prop('disabled', false);
+                                warningSpan.hide();
+                                hasAvailableWorker = true;
+                            }
+                        });
+
+                        if (!hasAvailableWorker && hasOverlappingWorker) {
+                            $(`#overlapWarning-${workplaceId}`).text('全ての未割当の職人が他の施工依頼と重複しています。').show();
+                        } else if (hasOverlappingWorker) {
+                            $(`#overlapWarning-${workplaceId}`).text('一部の未割当の職人が他の施工依頼と重複しています。').show();
+                        } else {
+                            $(`#overlapWarning-${workplaceId}`).hide();
+                        }
+
+                        updateAssignButton(workplaceId);
+                    }
+                });
+            }
+
+            // 各モーダルが開かれたときに重複チェックを実行
+            $('.modal').on('shown.bs.modal', function () {
+                const workplaceId = $(this).attr('id').split('-')[1];
+                checkOverlap(workplaceId);
+            });
+
+            // チェックボックスの状態が変更されたときにアサインボタンの状態を更新
+            $('.worker-checkbox').change(function() {
+                const workplaceId = $(this).data('workplace-id');
+                updateAssignButton(workplaceId);
+            });
+
+            function updateAssignButton(workplaceId) {
+                const form = $(`#assignForm-${workplaceId}`);
+                const hasCheckedWorker = form.find('input[name="worker_ids[]"]:checked:not(:disabled)').length > 0;
+                $(`#assignButton-${workplaceId}`).prop('disabled', !hasCheckedWorker);
+            }
         });
+
         function confirmApproval() {
             return confirm('本当にこの施工依頼を承認しますか？');
         }
@@ -152,6 +326,5 @@
         function confirmRejection() {
             return confirm('本当にこの施工依頼を否認しますか？');
         }
-
     </script>
 @stop

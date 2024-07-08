@@ -75,6 +75,9 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
     // 承認ルート
     Route::post('workplaces/{role}/{id}/approve', [WorkplaceController::class, 'approve'])->name('saler.workplaces.approve')->defaults('role', 'saler');
     Route::post('workplaces/{role}/{id}/reject', [WorkplaceController::class, 'reject'])->name('saler.workplaces.reject')->defaults('role', 'saler');
+    // アサインルート
+    Route::post('workplaces/{id}/assign', [WorkplaceController::class, 'storeAssign'])->name('saler.workplaces.assign.store')->defaults('role', 'saler');
+    Route::post('workplaces/{id}/unassign', [WorkplaceController::class, 'unassignWorker'])->name('saler.workplaces.unassign')->defaults('role', 'saler');
 });
 
 // 施工業者用のルート
@@ -85,3 +88,5 @@ Route::prefix('worker')->middleware('auth', 'can:access-worker')->group(function
 
 // NotificationContent用のルート
 Route::resource('notification_contents', NotificationContentController::class)->middleware('auth');
+
+Route::post('/check-overlap', [WorkplaceController::class, 'checkOverlap'])->name('workplaces.check-overlap')->middleware('web');
