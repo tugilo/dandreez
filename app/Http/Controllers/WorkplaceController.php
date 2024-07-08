@@ -563,7 +563,7 @@ public function storeAssign(Request $request, $id, $role)
         return response()->json([
             'overlapping' => $overlappingAssigns->isNotEmpty(),
             'overlappingWorkerIds' => $overlappingWorkerIds,
-            'assignedWorkerIds' => $assignedWorkers // 新しく追加
+            'assignedWorkerIds' => $assignedWorkers 
         ]);
     }
 }
