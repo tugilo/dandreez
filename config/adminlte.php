@@ -252,10 +252,12 @@ return [
     | For detailed instructions you can look the urls section here:
     | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
     |
-    */
+     'dashboard_url' => 'home',
+   */
 
     'use_route_url' => false,
-    'dashboard_url' => 'home',
+    'dashboard_url' => env('DASHBOARD_URL', 'home'),
+
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -278,18 +280,6 @@ return [
     'enabled_laravel_mix' => false,
     'laravel_mix_css_path' => 'css/app.css',
     'laravel_mix_js_path' => 'js/app.js',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Menu Items
-    |--------------------------------------------------------------------------
-    |
-    | Here we can modify the sidebar/top navigation of the admin panel.
-    |
-    | For detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Menu-Configuration
-    |
-    */
 
     'menu' => [
         // Admin専用
@@ -325,7 +315,6 @@ return [
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-admin'
         ],
-
         [
             'header' => '問屋会社管理',
             'can'  => 'access-admin'
@@ -374,6 +363,22 @@ return [
             'icon' => 'fas fa-fw fa-bell',
             'can'  => 'access-admin'
         ],
+        [
+            'header' => 'ステータス管理',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => '新規ステータス登録',
+            'url' => 'admin/statuses/create',
+            'icon' => 'fas fa-fw fa-plus-circle',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => 'ステータス一覧',
+            'url' => 'admin/statuses',
+            'icon' => 'fas fa-fw fa-list',
+            'can'  => 'access-admin'
+        ],
 
         // 得意先専用
         [
@@ -381,14 +386,21 @@ return [
             'can'  => 'access-customer'
         ],
         [
+            'text' => 'ダッシュボード',
+            'url' => 'customer/home',
+            'icon' => 'fas fa-fw fa-tachometer-alt',
+            'can'  => 'access-customer'
+        ],
+    
+        [
             'text' => '新規施工依頼登録',
-            'url' => 'workplaces/create',
+            'url' => 'customer/workplaces/create',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-customer'
         ],
         [
             'text' => '施工依頼一覧',
-            'url' => 'workplaces',
+            'url' => 'customer/workplaces',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-customer'
         ],
@@ -397,11 +409,37 @@ return [
             'header' => '問屋専用',
             'can'  => 'access-saler'
         ],
+        [
+            'text' => 'ダッシュボード',
+            'url' => 'saler/home',
+            'icon' => 'fas fa-fw fa-tachometer-alt',
+            'can'  => 'access-saler'
+        ],
+        [
+            'text' => '新規施工依頼登録',
+            'url'  => 'saler/workplaces/create',
+            'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-saler',
+        ],
+        [
+            'text' => '施工依頼一覧',
+            'url'  => 'saler/workplaces',
+            'icon' => 'fas fa-fw fa-list',
+            'can'  => 'access-saler',
+        ],
+
         // 施工業者専用
         [
             'header' => '施工業者専用',
             'can'  => 'access-worker'
         ],
+        [
+            'text' => 'ダッシュボード',
+            'url' => 'worker/home',
+            'icon' => 'fas fa-fw fa-tachometer-alt',
+            'can'  => 'access-worker'
+        ],
+
     ],
 
     /*

@@ -39,16 +39,13 @@
             defaultView: 'month', // デフォルトの表示は月ビュー
             editable: true, // イベントを編集可能にする
             eventLimit: true, // イベントが多い日はリンクで表示
-        /*
-            // データベースからイベントを読み込む
-            events: '/api/events', // イベントデータのURL
+            events: @json($events), // コントローラーから渡されたイベントデータ
             eventClick: function(event) {
                 if (event.url) {
-                    window.open(event.url, '_blank'); // イベントのURLを新しいタブで開く
-                    return false; // FullCalendarのデフォルトの動作（リンクに遷移する動作）をキャンセル
+                    window.location.href = event.url;
+                    return false; // クリックしたイベントのデフォルト動作をキャンセル
                 }
             }
-        */
         });
     });
     </script>

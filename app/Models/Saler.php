@@ -18,4 +18,10 @@ class Saler extends Model
     {
         return $this->hasMany(SalerStaff::class);
     }
+    
+    // Assign（割り当て）とのリレーション
+    public function assigns()
+    {
+        return $this->hasMany(Assign::class);
+    }
 }

@@ -13,6 +13,18 @@ class Assign extends Model
     
     public $timestamps = true;
 
+    // Saler（問屋）とのリレーション
+    public function saler()
+    {
+        return $this->belongsTo(Saler::class);
+    }
+
+    // SalerStaff（問屋スタッフ）とのリレーション
+    public function salerStaff()
+    {
+        return $this->belongsTo(SalerStaff::class);
+    }
+
     // リレーション: 現場との1対多の関係
     public function workplace()
     {

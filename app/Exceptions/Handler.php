@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Support\Facades\Log; 
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -46,5 +47,13 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+    public function render($request, Throwable $exception)
+    {
+        if ($exception instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+            Log::error('404エラーが発生しました', ['url' => $request->url(), 'exception' => $exception]);
+        }
+
+        return parent::render($request, $exception);
     }
 }

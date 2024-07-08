@@ -34,14 +34,6 @@
             editable: true, // イベントを編集可能にする
             eventLimit: true, // イベントが多い日はリンクで表示
 
-            // データベースからイベントを読み込む
-            events: '/api/events', // イベントデータのURL
-            eventClick: function(event) {
-                if (event.url) {
-                    window.open(event.url, '_blank'); // イベントのURLを新しいタブで開く
-                    return false; // FullCalendarのデフォルトの動作（リンクに遷移する動作）をキャンセル
-                }
-            }
         });
     });
 </script>
