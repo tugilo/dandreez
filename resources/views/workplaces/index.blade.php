@@ -45,13 +45,16 @@
                 <tr>
                     <th class="btn-icon">編集</th>
                     <th class="btn-icon">詳細</th>
+                    @if($role === 'saler')
+                        <th class="btn-icon">承認</th>
+                    @endif
                     <th>ID</th>
                     <th>得意先名</th>
                     <th>施工依頼名</th>
                     <th>ステータス</th>
                     <th>作成日</th>
                     <th class="btn-icon">削除</th>
-                </tr>
+                        </tr>
                 </thead>
                 <tbody>
                 @foreach ($workplaces as $workplace)
@@ -66,10 +69,17 @@
                                 <i class="fas fa-info-circle"></i>
                             </a>
                         </td>
+                        @if($role === 'saler')
+                            <td>
+                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#approveModal-{{ $workplace->id }}">承認</button>
+                            </td>
+                        @endif
                         <td>{{ $workplace->id }}</td>
                         <td>{{ $workplace->customer->name }}</td>
                         <td>{{ $workplace->name }}</td>
-                        <td>{{ $workplace->status->name_ja }}</td>
+                        <td class="text-center">
+                            <span class="badge {{ $workplace->status->color }} p-2" style="width: 80px; display: inline-block; text-align: center;">{{ $workplace->status->name_ja }}</span>
+                        </td>
                         <td>{{ $workplace->created_at }}</td>
                         <td class="text-center">
                             <form method="POST" action="{{ route($destroyRoute, ['role' => $role, 'id' => $workplace->id]) }}">
@@ -86,6 +96,42 @@
             </table>
         </div>
     </div>
+    @foreach ($workplaces as $workplace)
+        @if($role === 'saler')
+        <!-- 承認モーダル -->
+        <div class="modal fade" id="approveModal-{{ $workplace->id }}" tabindex="-1" role="dialog" aria-labelledby="approveModalLabel-{{ $workplace->id }}" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="approveModalLabel-{{ $workplace->id }}">施工依頼の承認</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>ID:</strong> {{ $workplace->id }}</p>
+                        <p><strong>得意先:</strong> {{ $workplace->customer->name }}</p>
+                        <p><strong>施工名:</strong> {{ $workplace->name }}</p>
+                        <p><strong>施工期間:</strong> {{ $workplace->construction_start }} ～ {{ $workplace->construction_end }}</p>
+                        <p><strong>施工場所:</strong> {{ $workplace->zip }} {{ $workplace->prefecture }} {{ $workplace->city }} {{ $workplace->address }} {{ $workplace->building }}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <form action="{{ route($role . '.workplaces.approve', ['role' => $role, 'id' => $workplace->id]) }}" method="POST" onsubmit="return confirmApproval()">
+                            @csrf
+                            <button type="submit" class="btn btn-primary">承認</button>
+                        </form>
+                        <form action="{{ route($role . '.workplaces.reject', ['role' => $role, 'id' => $workplace->id]) }}" method="POST" onsubmit="return confirmRejection()">
+                            @csrf
+                            <button type="submit" class="btn btn-danger">拒否</button>
+                        </form>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                    </div>
+        </div>
+            </div>
+        </div>
+        @endif
+    @endforeach
+
 @stop
 
 @section('js')
@@ -99,5 +145,13 @@
                 }
             });
         });
+        function confirmApproval() {
+            return confirm('本当にこの施工依頼を承認しますか？');
+        }
+
+        function confirmRejection() {
+            return confirm('本当にこの施工依頼を否認しますか？');
+        }
+
     </script>
 @stop

@@ -72,6 +72,9 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
     Route::post('workplaces/{role}/{workplaceId}/photos', [PhotoController::class, 'store'])->name('saler.workplaces.photos.store')->defaults('role', 'saler');
     Route::put('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('saler.workplaces.photos.update')->defaults('role', 'saler');
     Route::delete('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'destroy'])->name('saler.workplaces.photos.destroy')->defaults('role', 'saler');
+    // 承認ルート
+    Route::post('workplaces/{role}/{id}/approve', [WorkplaceController::class, 'approve'])->name('saler.workplaces.approve')->defaults('role', 'saler');
+    Route::post('workplaces/{role}/{id}/reject', [WorkplaceController::class, 'reject'])->name('saler.workplaces.reject')->defaults('role', 'saler');
 });
 
 // 施工業者用のルート

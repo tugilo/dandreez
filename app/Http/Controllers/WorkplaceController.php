@@ -322,6 +322,44 @@ class WorkplaceController extends Controller
     }
 
     /**
+     * 施工依頼を承認する
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param string $role ユーザーの役割
+     * @param int $id 施工依頼ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function approve(Request $request, $role, $id)
+    {
+        $workplace = Workplace::findOrFail($id);
+        $workplace->status_id = 3; // 承認 (accepted)
+        $workplace->save();
+
+        Log::info('施工依頼が承認されました。', ['workplace_id' => $id]);
+
+        return redirect()->route($this->getRoutesByRole($role)['indexRoute'], ['role' => $role, 'id' => $id])->with('success', '施工依頼が承認されました。');
+    }
+
+    /**
+     * 施工依頼を否認する
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param string $role ユーザーの役割
+     * @param int $id 施工依頼ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function reject(Request $request, $role, $id)
+    {
+        $workplace = Workplace::findOrFail($id);
+        $workplace->status_id = 4; // 承認 (reject)
+        $workplace->save();
+
+        Log::info('施工依頼が否認されました。', ['workplace_id' => $id]);
+
+        return redirect()->route($this->getRoutesByRole($role)['indexRoute'], ['role' => $role, 'id' => $id])->with('success', '施工依頼が否認されました。');
+    }
+
+    /**
      * 役割に応じたルートを取得するヘルパーメソッド
      *
      * @param string $role ユーザーの役割（customerまたはsaler）

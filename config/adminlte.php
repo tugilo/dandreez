@@ -252,10 +252,12 @@ return [
     | For detailed instructions you can look the urls section here:
     | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
     |
-    */
+     'dashboard_url' => 'home',
+   */
 
     'use_route_url' => false,
-    'dashboard_url' => 'home',
+    'dashboard_url' => env('DASHBOARD_URL', 'home'),
+
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -384,6 +386,13 @@ return [
             'can'  => 'access-customer'
         ],
         [
+            'text' => 'ダッシュボード',
+            'url' => 'customer/home',
+            'icon' => 'fas fa-fw fa-tachometer-alt',
+            'can'  => 'access-customer'
+        ],
+    
+        [
             'text' => '新規施工依頼登録',
             'url' => 'customer/workplaces/create',
             'icon' => 'fas fa-fw fa-building',
@@ -398,6 +407,12 @@ return [
        // 問屋専用
         [
             'header' => '問屋専用',
+            'can'  => 'access-saler'
+        ],
+        [
+            'text' => 'ダッシュボード',
+            'url' => 'saler/home',
+            'icon' => 'fas fa-fw fa-tachometer-alt',
             'can'  => 'access-saler'
         ],
         [
@@ -418,6 +433,13 @@ return [
             'header' => '施工業者専用',
             'can'  => 'access-worker'
         ],
+        [
+            'text' => 'ダッシュボード',
+            'url' => 'worker/home',
+            'icon' => 'fas fa-fw fa-tachometer-alt',
+            'can'  => 'access-worker'
+        ],
+
     ],
 
     /*

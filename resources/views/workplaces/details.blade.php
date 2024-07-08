@@ -23,10 +23,46 @@
         <div class="mb-4">
             <!-- 施工依頼情報の表示 -->
             <h5>施工依頼情報</h5>
-            <p><strong>ID:</strong> {{ $workplace->id }}</p>
-            <p><strong>得意先:</strong> {{ $workplace->customer->name }}</p>
-            <p><strong>施工名:</strong> {{ $workplace->name }}</p>
-            <p><strong>施工期間:</strong> {{ $workplace->construction_start }} ～ {{ $workplace->construction_end }}</p>
+            <table class="table table-bordered">
+                <tr>
+                    <th style="width:20%">ID</th>
+                    <td>{{ $workplace->id }}</td>
+                </tr>
+                <tr>
+                    <th>得意先名</th>
+                    <td>{{ $workplace->customer->name }}</td>
+                </tr>
+                <tr>
+                    <th>施工依頼名</th>
+                    <td>{{ $workplace->name }}</td>
+                </tr>
+                <tr>
+                    <th>施工期間</th>
+                    <td>{{ $workplace->construction_start }} ～ {{ $workplace->construction_end }}</td>
+                </tr>
+                <tr>
+                    <th>施工場所</th>
+                    <td>{{ $workplace->zip }} {{ $workplace->prefecture }} {{ $workplace->city }} {{ $workplace->address }} {{ $workplace->building }}</td>
+                </tr>
+                <tr>
+                    <th>ステータス</th>
+                    <td>
+                        <span class="badge {{ $workplace->status->color }} p-2" style="width: 80px; display: inline-block; text-align: center;">
+                            {{ $workplace->status->name_ja }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>作成日</th>
+                    <td>{{ $workplace->created_at }}</td>
+                </tr>
+            </table>
+            @if($role === 'saler')
+            <div class="text-center">
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#approveModal">承認</button>
+                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#rejectModal">否認</button>
+            </div>
+            @endif
         </div>
 
         @include('workplaces.partials.details_tabs', [
@@ -45,6 +81,65 @@
         ])
     </div>
 </div>
+@if($role === 'saler')
+    <!-- 承認モーダル -->
+    <div class="modal fade" id="approveModal" tabindex="-1" role="dialog" aria-labelledby="approveModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="approveModalLabel">施工依頼の承認</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>本当にこの施工依頼を承認しますか？</p>
+                    <p><strong>ID:</strong> {{ $workplace->id }}</p>
+                    <p><strong>得意先:</strong> {{ $workplace->customer->name }}</p>
+                    <p><strong>施工名:</strong> {{ $workplace->name }}</p>
+                    <p><strong>施工期間:</strong> {{ $workplace->construction_start }} ～ {{ $workplace->construction_end }}</p>
+                    <p><strong>施工場所:</strong> {{ $workplace->zip }} {{ $workplace->prefecture }} {{ $workplace->city }} {{ $workplace->address }} {{ $workplace->building }}</p>
+            </div>
+                <div class="modal-footer">
+                    <form action="{{ route($role . '.workplaces.approve', ['role' => $role, 'id' => $workplace->id]) }}" method="POST" onsubmit="return confirm('本当にこの施工依頼を承認しますか？')">
+                        @csrf
+                        <button type="submit" class="btn btn-primary">承認</button>
+                    </form>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 否認モーダル -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectModalLabel">施工依頼の否認</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>本当にこの施工依頼を否認しますか？</p>
+                    <p><strong>ID:</strong> {{ $workplace->id }}</p>
+                    <p><strong>得意先:</strong> {{ $workplace->customer->name }}</p>
+                    <p><strong>施工名:</strong> {{ $workplace->name }}</p>
+                    <p><strong>施工期間:</strong> {{ $workplace->construction_start }} ～ {{ $workplace->construction_end }}</p>
+                    <p><strong>施工場所:</strong> {{ $workplace->zip }} {{ $workplace->prefecture }} {{ $workplace->city }} {{ $workplace->address }} {{ $workplace->building }}</p>
+            </div>
+                <div class="modal-footer">
+                    <form action="{{ route($role . '.workplaces.reject', ['role' => $role, 'id' => $workplace->id]) }}" method="POST" onsubmit="return confirm('本当にこの施工依頼を否認しますか？')">
+                        @csrf
+                        <button type="submit" class="btn btn-danger">否認</button>
+                    </form>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
 @stop
 
 @section('css')
