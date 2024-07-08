@@ -340,12 +340,14 @@ class WorkplaceController extends Controller
                     'storeRoute' => 'customer.workplaces.store',
                     'updateRoute' => 'customer.workplaces.update',
                     'instructionsStoreRoute' => 'customer.workplaces.instructions.store',
-                    'instructionsUpdateRoute' => 'customer.workplaces.instructions.update',  // 追加
-                    'instructionsDestroyRoute' => 'customer.workplaces.instructions.destroy',  // 追加
+                    'instructionsUpdateRoute' => 'customer.workplaces.instructions.update',
+                    'instructionsDestroyRoute' => 'customer.workplaces.instructions.destroy',
                     'photoStoreRoute' => 'customer.workplaces.photos.store',
                     'photoUpdateRoute' => 'customer.workplaces.photos.update',
                     'photoDestroyRoute' => 'customer.workplaces.photos.destroy',
                     'fileStoreRoute' => 'customer.workplaces.files.store',
+                    'fileUpdateRoute' => 'customer.workplaces.files.update',
+                    'fileDeleteRoute' => 'customer.workplaces.files.destroy',
                 ];
             case 'saler':
                 return [
@@ -357,12 +359,14 @@ class WorkplaceController extends Controller
                     'storeRoute' => 'saler.workplaces.store',
                     'updateRoute' => 'saler.workplaces.update',
                     'instructionsStoreRoute' => 'saler.workplaces.instructions.store',
-                    'instructionsUpdateRoute' => 'saler.workplaces.instructions.update',  // 追加
-                    'instructionsDestroyRoute' => 'saler.workplaces.instructions.destroy',  // 追加
+                    'instructionsUpdateRoute' => 'saler.workplaces.instructions.update',
+                    'instructionsDestroyRoute' => 'saler.workplaces.instructions.destroy',
                     'photoStoreRoute' => 'saler.workplaces.photos.store',
                     'photoUpdateRoute' => 'saler.workplaces.photos.update',
                     'photoDestroyRoute' => 'saler.workplaces.photos.destroy',
                     'fileStoreRoute' => 'saler.workplaces.files.store',
+                    'fileUpdateRoute' => 'saler.workplaces.files.update',
+                    'fileDeleteRoute' => 'saler.workplaces.files.destroy',
                 ];
             default:
                 abort(404);
