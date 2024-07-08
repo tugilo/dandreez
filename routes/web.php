@@ -3,14 +3,17 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WorkplaceController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CustomerCompanyController;
 use App\Http\Controllers\SalerController;
+use App\Http\Controllers\SalerCompanyController;
+use App\Http\Controllers\WorkerController;
+use App\Http\Controllers\ConstructionCompanyController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\WorkerController;
 use App\Http\Controllers\NotificationContentController;
 
 // 標準の認証ルート（ログイン、ログアウト、パスワードリセット）
@@ -25,9 +28,12 @@ Route::get('/', function() {
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 // システム管理者のルート
-Route::prefix('admin')->middleware('auth', 'can:admin')->group(function () {
+Route::prefix('admin')->middleware('auth', 'can:access-admin')->group(function () {
     Route::get('home', [AdminController::class, 'index'])->name('admin.home');
     Route::resource('users', UserController::class)->except(['show']);
+    Route::resource('customer_companies', CustomerCompanyController::class)->except(['show']);
+    Route::resource('saler_companies', SalerCompanyController::class)->except(['show']);
+    Route::resource('construction_companies', ConstructionCompanyController::class)->except(['show']);
     Route::resource('statuses', StatusController::class);
     Route::post('statuses/{status}/restore', [StatusController::class, 'restore'])->name('statuses.restore');
 });
@@ -83,7 +89,6 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
 // 施工業者用のルート
 Route::prefix('worker')->middleware('auth', 'can:access-worker')->group(function () {
     Route::get('home', [WorkerController::class, 'index'])->name('worker.home');
-    Route::resource('construction_companies', ConstructionCompanyController::class);
 });
 
 // NotificationContent用のルート

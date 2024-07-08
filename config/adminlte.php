@@ -289,13 +289,13 @@ return [
         ],
         [
             'text' => '新規ユーザー登録',
-            'url' => 'users/create',
+            'url' => 'admin/users/create',
             'icon' => 'fas fa-fw fa-user-plus',
             'can'  => 'access-admin'
         ],
         [
             'text' => 'ユーザー一覧',
-            'url' => 'users',
+            'url' => 'admin/users',
             'icon' => 'fas fa-fw fa-users',
             'can'  => 'access-admin'
         ],
@@ -305,13 +305,13 @@ return [
         ],
         [
             'text' => '新規得意先会社登録',
-            'url' => 'customer_companies/create',
+            'url' => 'admin/customer_companies/create',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-admin'
         ],
         [
             'text' => '得意先会社一覧',
-            'url' => 'customer_companies',
+            'url' => 'admin/customer_companies',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-admin'
         ],
@@ -321,13 +321,13 @@ return [
         ],
         [
             'text' => '新規問屋会社登録',
-            'url' => 'saler_companies/create',
+            'url' => 'admin/saler_companies/create',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-admin'
         ],
         [
             'text' => '問屋会社一覧',
-            'url' => 'saler_companies',
+            'url' => 'admin/saler_companies',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-admin'
         ],
@@ -337,13 +337,13 @@ return [
         ],
         [
             'text' => '新規施工会社登録',
-            'url' => 'construction_companies/create',
+            'url' => 'admin/construction_companies/create',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-admin'
         ],
         [
             'text' => '施工会社一覧',
-            'url' => 'construction_companies',
+            'url' => 'admin/construction_companies',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-admin'
         ],

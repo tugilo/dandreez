@@ -6,8 +6,17 @@ use App\Models\ConstructionCompany;
 use App\Models\Zip;
 use Illuminate\Http\Request;
 
-class constructionCompanyController extends Controller
+class ConstructionCompanyController extends Controller
 {
+    /**
+     * コントローラーインスタンスの生成
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     /**
      * 施工会社の一覧を表示します。
      *

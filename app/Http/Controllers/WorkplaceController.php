@@ -32,10 +32,12 @@ class WorkplaceController extends Controller
         $workplaces = Workplace::with(['customer', 'saler', 'customerStaff', 'salerStaff', 'workers', 'status', 'assigns.worker', 'assigns.constructionCompany'])
             ->get()
             ->map(function ($workplace) {
-                $workplace->construction_start = $workplace->construction_start->format('Y-m-d');
-                $workplace->construction_end = $workplace->construction_end->format('Y-m-d');
+                $workplace->construction_start = $workplace->construction_start ? $workplace->construction_start->format('Y-m-d') : null;
+                $workplace->construction_end = $workplace->construction_end ? $workplace->construction_end->format('Y-m-d') : null;
                 return $workplace;
             });
+        // ログ出力
+        Log::info('Workplaces data:', ['workplaces' => $workplaces]);
     
         foreach ($workplaces as $workplace) {
             $workplace->assignedWorkers = $workplace->assigns->where('show_flg', 1);

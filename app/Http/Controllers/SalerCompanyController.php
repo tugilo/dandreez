@@ -9,6 +9,15 @@ use Illuminate\Support\Facades\Log;
 
 class SalerCompanyController extends Controller
 {
+    /**
+     * コントローラーインスタンスの生成
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     public function index()
     {
         $salerCompanies = Saler::where('show_flg', 1)->get();

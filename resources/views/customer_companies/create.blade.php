@@ -120,7 +120,7 @@
             <!-- 登録ボタン -->
             <div class="form-group d-flex justify-content-center">
                 <button type="submit" class="btn btn-success mr-3">登録</button>
-                <a class="btn btn-secondary" href="{{ route('saler_companies.index') }}">キャンセル</a>
+                <a class="btn btn-secondary" href="{{ route('customer_companies.index') }}">キャンセル</a>
             </div>
         </form>
     </div>

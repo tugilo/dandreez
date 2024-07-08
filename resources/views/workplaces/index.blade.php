@@ -90,7 +90,13 @@
                         <td>{{ $workplace->id }}</td>
                         <td>{{ $workplace->customer->name }}</td>
                         <td>{{ $workplace->name }}</td>
-                        <td>{{ $workplace->construction_start->format('Y/m/d') }} 〜 {{ $workplace->construction_end->format('Y/m/d') }}</td> <!-- 新しく追加 -->
+                        <td>
+                            @if ($workplace->construction_start && $workplace->construction_end)
+                                {{ $workplace->construction_start->format('Y/m/d') }} 〜 {{ $workplace->construction_end->format('Y/m/d') }}
+                            @else
+                                未設定
+                            @endif
+                        </td>
                         <td class="text-center">
                             <span class="badge {{ $workplace->status->color }} p-2" style="width: 80px; display: inline-block; text-align: center;">{{ $workplace->status->name_ja }}</span>
                         </td>

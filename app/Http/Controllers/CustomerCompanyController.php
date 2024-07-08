@@ -4,11 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Zip;
-
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CustomerCompanyController extends Controller
 {
+    /**
+     * コントローラーインスタンスの生成
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     /**
      * 取引先会社の一覧を表示します。
      *
@@ -27,8 +36,9 @@ class CustomerCompanyController extends Controller
      */
     public function create()
     {
+
         $prefectures = Zip::getPrefectures();
-        return view('customer_companies.create', compact('prefectures'));
+        return view('customer_companies.create', compact('prefectures' ));
     }
 
     /**
@@ -120,4 +130,27 @@ class CustomerCompanyController extends Controller
         $customerCompany->update(['show_flg' => 0]);
         return redirect()->route('customer_companies.index')->with('success', '取引先会社が削除されました。');
     }
+    /**
+     * 役割に応じたルートを取得するヘルパーメソッド
+     *
+     * @param string $role ユーザーの役割（customerまたはsaler）
+     * @return array
+     */
+    private function getRoutesByRole($role)
+    {
+        switch ($role) {
+            case 'admin':
+                return [
+                    'indexRoute' => 'admin.customer_companies.store.index',
+                    'createRoute' => 'admin.customer_companies.create',
+                    'editRoute' => 'admin.customer_companies.edit',
+                    'destroyRoute' => 'admin.customer_companies.destroy',
+                    'storeRoute' => 'admin.customer_companies.store',
+                    'updateRoute' => 'admin.customer_companies.update',
+                ];
+            default:
+                abort(404);
+        }
+    }
+
 }
