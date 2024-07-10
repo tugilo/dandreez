@@ -15,6 +15,7 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationContentController;
+use App\Http\Controllers\AssignmentViewController;
 
 // 標準の認証ルート（ログイン、ログアウト、パスワードリセット）
 Auth::routes();
@@ -88,6 +89,17 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
     Route::post('workplaces/check-overlap', [WorkplaceController::class, 'checkOverlap'])->name('workplaces.check-overlap');
     Route::get('workplaces/get-worker-assignments', [WorkplaceController::class, 'getWorkerAssignments'])->name('workplaces.get-worker-assignments');
     Route::get('workplaces/get-existing-assigns', [WorkplaceController::class, 'getExistingAssigns'])->name('workplaces.get-existing-assigns');
+    // 職人別アサイン状況表示
+    Route::get('assignments/workers', [AssignmentViewController::class, 'workerView'])
+        ->name('saler.assignments.workers');
+
+    // 現場別アサイン状況表示 (将来的に実装予定)
+    Route::get('assignments/workplaces', [AssignmentViewController::class, 'workplaceView'])
+        ->name('saler.assignments.workplaces');
+
+    // アサイン詳細情報取得用のAPI (必要に応じて)
+    Route::get('assignments/details', [AssignmentViewController::class, 'getAssignmentDetails'])
+        ->name('saler.assignments.details');
 });
 
 // 施工業者用のルート

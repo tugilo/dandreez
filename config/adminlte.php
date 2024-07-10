@@ -427,8 +427,21 @@ return [
             'icon' => 'fas fa-fw fa-list',
             'can'  => 'access-saler',
         ],
-
-        // 施工業者専用
+        [
+            'header' => 'アサイン管理',
+            'can'  => 'access-saler'
+        ],
+        [
+            'text' => '職人別アサイン状況',
+            'url'  => 'saler/assignments/workers',
+            'icon' => 'fas fa-fw fa-user-clock',
+        ],
+        [
+            'text' => '現場別アサイン状況',
+            'url'  => 'saler/assignments/workplaces',
+            'icon' => 'fas fa-fw fa-building',
+        ],
+// 施工業者専用
         [
             'header' => '施工業者専用',
             'can'  => 'access-worker'
