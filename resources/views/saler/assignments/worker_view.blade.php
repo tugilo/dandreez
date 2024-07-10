@@ -17,11 +17,15 @@
                 </a>
             </div>
             <!-- 月選択フォーム -->
-            <form action="{{ route('saler.assignments.workers') }}" method="GET" class="form-inline">
+            <form action="{{ route('saler.assignments.sites') }}" method="GET" class="form-inline">
                 @csrf
                 <div class="form-group mx-2">
-                    <label for="month" class="mr-2">月選択:</label>
-                    <input type="month" id="month" name="month" value="{{ $month }}" class="form-control">
+                    <div class="input-group date" id="monthpicker" data-target-input="nearest">
+                        <input type="text" class="form-control datetimepicker-input" data-target="#monthpicker" name="month" value="{{ $month }}" />
+                        <div class="input-group-append" data-target="#monthpicker" data-toggle="datetimepicker">
+                            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                        </div>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">表示</button>
             </form>
@@ -84,6 +88,7 @@
 @stop
 
 @section('css')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.39.0/css/tempusdominus-bootstrap-4.min.css">
 <style>
     /* テーブルのスタイル調整 */
     .table th, .table td {
@@ -100,8 +105,22 @@
 @stop
 
 @section('js')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.39.0/js/tempusdominus-bootstrap-4.min.js"></script>
 <script>
 $(function () {
+    $('#monthpicker').datetimepicker({
+        format: 'YYYY-MM',
+        viewMode: 'months',
+        ignoreReadonly: true,
+        allowInputToggle: true
+    });
+
+    // 月が変更されたら自動的にフォームをサブミット
+    $("#monthpicker").on("change.datetimepicker", function (e) {
+        $(this).closest('form').submit();
+    });
+
     $('[data-toggle="tooltip"]').tooltip({
         boundary: 'window'
     });
