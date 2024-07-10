@@ -18,7 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
+use DB;
 class WorkplaceController extends Controller
 {
     /**
@@ -435,137 +435,238 @@ class WorkplaceController extends Controller
         }
     }
 
-/**
- * 職人を施工依頼にアサインするメソッド
- *
- * @param \Illuminate\Http\Request $request
- * @param int $id 施工依頼ID
- * @param string $role ユーザーの役割
- * @return \Illuminate\Http\RedirectResponse
- */
-public function storeAssign(Request $request, $id, $role)
-{
-    // リクエストデータとルートパラメータをログに出力
-    Log::info('storeAssign request data:', [
-        'request_all' => $request->all(),
-        'route_id' => $id,
-        'role' => $role,
-    ]);
-
-    // ログインユーザーの情報を取得
-    $user = auth()->user();
-    $login = Login::where('id', $user->id)->first();
-    $salerStaff = SalerStaff::where('id', $login->user_id)->first();
-    $salerId = $salerStaff->saler_id;
-    $salerStaffId = $salerStaff->id;
-
-    $workplaceId = $id;
-    $constructionCompanyId = $request->input('construction_company_id');
-    $workerIds = $request->input('worker_ids', []);
-
-    // チェックされていない職人のアサインを論理削除（show_flgを0に設定）
-    Assign::where('workplace_id', $workplaceId)
-        ->where('construction_company_id', $constructionCompanyId)
-        ->whereNotIn('worker_id', $workerIds)
-        ->where('show_flg', 1)
-        ->update(['show_flg' => 0]);
-
-    // 各職人をアサインする
-    foreach ($workerIds as $workerId) {
-        Assign::updateOrCreate(
-            [
-                'workplace_id' => $workplaceId,
-                'construction_company_id' => $constructionCompanyId,
-                'worker_id' => $workerId,
-            ],
-            [
-                'saler_id' => $salerId,
-                'saler_staff_id' => $salerStaffId,
-                'show_flg' => 1, 
-            ]
-        );
-    }
     
-    // show_flg=0のレコードを1に更新（既存のデータを復活させる）
-    Assign::where('workplace_id', $workplaceId)
-        ->where('construction_company_id', $constructionCompanyId)
-        ->whereIn('worker_id', $workerIds)
-        ->where('show_flg', 0)
-        ->update(['show_flg' => 1]);
-
-    // 施工依頼のステータスを確認し、必要に応じて更新
-    $workplace = Workplace::findOrFail($workplaceId);
-    if ($workplace->status_id == 1) {  // 1は未受領のステータスIDと仮定
-        $workplace->status_id = 3;  // 3は受領済みのステータスIDと仮定
-        $workplace->save();
-        
-        Log::info('施工依頼のステータスを更新しました。', [
-            'workplace_id' => $workplaceId,
-            'old_status' => 1,
-            'new_status' => 3
-        ]);
-    }
-
-    // 成功メッセージとともにリダイレクト
-    return redirect()->route($this->getRoutesByRole($role)['indexRoute'], ['role' => $role])
-                    ->with('success', '職人のアサインが完了しました。');
-}
     /**
-     * 職人のアサインを解除するメソッド
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int $id 施工依頼ID
-     * @param string $role ユーザーの役割
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function unassignWorker(Request $request, $id, $role)
+     * * 職人を施工依頼にアサインするメソッド
+     * *
+     * * @param \Illuminate\Http\Request $request
+     * * @param int $id 施工依頼ID
+     * 
+     * * @param string $role ユーザーの役割
+     * * @return \Illuminate\Http\RedirectResponse
+     * */
+    public function storeAssign(Request $request, $id)
     {
-        // アサインを見つけて論理削除
-        $assign = Assign::findOrFail($request->input('assign_id'));
-        $assign->update(['show_flg' => 0]);
-
-        // 成功メッセージとともにリダイレクト
-        return redirect()->back()->with('success', '職人のアサインを解除しました。');
-    }
-    public function checkOverlap(Request $request)
-    {
-        // リクエストから必要なデータを取得
-        $workplaceId = $request->input('workplace_id');
-        $workerIds = $request->input('worker_ids');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
-    
-        // 重複するアサインを検索
-        $overlappingAssigns = Assign::whereIn('worker_id', $workerIds)
-            ->where('show_flg', 1)
-            ->where('workplace_id', '!=', $workplaceId)
-            ->whereHas('workplace', function ($query) use ($startDate, $endDate) {
-                $query->where(function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('construction_start', [$startDate, $endDate])
-                        ->orWhereBetween('construction_end', [$startDate, $endDate])
-                        ->orWhere(function ($q) use ($startDate, $endDate) {
-                            $q->where('construction_start', '<=', $startDate)
-                                ->where('construction_end', '>=', $endDate);
-                        });
-                });
-            })
-            ->with(['worker', 'workplace'])
-            ->get();
-    
-        // 重複している職人のIDを取得
-        $overlappingWorkerIds = $overlappingAssigns->pluck('worker_id')->unique();
-    
-        // 現在の施工依頼に割り当てられている職人を取得
-        $assignedWorkers = Assign::where('workplace_id', $workplaceId)
-            ->where('show_flg', 1)
-            ->pluck('worker_id')
-            ->unique();
-    
-        // レスポンスを返す
-        return response()->json([
-            'overlapping' => $overlappingAssigns->isNotEmpty(),
-            'overlappingWorkerIds' => $overlappingWorkerIds,
-            'assignedWorkerIds' => $assignedWorkers 
+        Log::info('storeAssign request data:', [
+            'request_all' => $request->all(),
+            'route_id' => $id,
+            'role' => $request->input('role')
         ]);
+    
+        $workplace = Workplace::findOrFail($id);
+        $constructionCompanyId = $request->input('construction_company_id');
+        $workerId = $request->input('worker_id');
+        $selectedDates = json_decode($request->input('selected_dates'), true) ?? [];
+        $removedDates = json_decode($request->input('removed_dates'), true) ?? [];
+        $role = $request->input('role', 'saler');
+    
+        Log::info('Decoded data:', [
+            'selectedDates' => $selectedDates,
+            'removedDates' => $removedDates
+        ]);
+    
+        DB::beginTransaction();
+    
+        try {
+            // 新しく選択された日付に対してアサインを作成または更新
+            foreach ($selectedDates as $date) {
+                Assign::updateOrCreate(
+                    [
+                        'workplace_id' => $id,
+                        'worker_id' => $workerId,
+                        'start_date' => $date,
+                        'end_date' => $date,
+                    ],
+                    [
+                        'construction_company_id' => $constructionCompanyId,
+                        'saler_id' => $workplace->saler_id,
+                        'saler_staff_id' => $workplace->saler_staff_id,
+                        'show_flg' => 1,
+                    ]
+                );
+            }
+    
+            // 解除された日付のアサインを無効化（show_flg = 0）
+            if (!empty($removedDates)) {
+                $updatedCount = Assign::where('workplace_id', $id)
+                    ->where('worker_id', $workerId)
+                    ->whereIn('start_date', $removedDates)
+                    ->update(['show_flg' => 0]);
+    
+                Log::info('Assigns removed:', [
+                    'workplace_id' => $id,
+                    'worker_id' => $workerId,
+                    'removed_dates' => $removedDates,
+                    'updated_count' => $updatedCount
+                ]);
+            } else {
+                Log::info('No assigns to remove');
+            }
+    
+            if ($workplace->status_id == 1) {
+                $workplace->status_id = 3;
+                $workplace->save();
+            }
+    
+            DB::commit();
+    
+            Log::info('Assign updated successfully', [
+                'workplace_id' => $id,
+                'worker_id' => $workerId,
+                'selected_dates' => $selectedDates,
+                'removed_dates' => $removedDates
+            ]);
+    
+            return redirect()->route($this->getRoutesByRole($role)['indexRoute'], ['role' => $role])
+                             ->with('success', '職人のアサインが更新されました。');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error in storeAssign', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            return redirect()->back()->with('error', 'アサインの更新中にエラーが発生しました。');
+        }
     }
+    
+    
+    /**
+     * * 職人のアサインを解除するメソッド
+     * *
+     * * @param \Illuminate\Http\Request $request
+     * * @param int $id 施工依頼ID
+     * * @param string $role ユーザーの役割
+     * * @return \Illuminate\Http\RedirectResponse
+     * */
+
+     public function unassignWorker(Request $request, $id, $role)
+     {
+         // アサインを見つけて論理削除
+         $assign = Assign::findOrFail($request->input('assign_id'));
+         $assign->update(['show_flg' => 0]);
+ 
+         // 成功メッセージとともにリダイレクト
+         return redirect()->back()->with('success', '職人のアサインを解除しました。');
+     }
+
+
+    
+     /**
+      * * アサインの重複をチェックするメソッド
+      *
+      * @param \Illuminate\Http\Request $request
+      * @return \Illuminate\Http\JsonResponse
+      */
+      public function checkOverlap(Request $request)
+      {
+          $workplaceId = $request->input('workplace_id');
+          $workerIds = $request->input('worker_ids', []);
+          $selectedDates = json_decode($request->input('selected_dates'), true) ?? [];
+      
+          $overlappingAssigns = Assign::whereIn('worker_id', $workerIds)
+              ->where('show_flg', 1)
+              ->where('workplace_id', '!=', $workplaceId)
+              ->whereIn('start_date', $selectedDates)
+              ->with(['worker', 'workplace'])
+              ->get();
+      
+          $overlappingWorkerIds = $overlappingAssigns->pluck('worker_id')->unique();
+      
+          $assignedWorkers = Assign::where('workplace_id', $workplaceId)
+              ->where('show_flg', 1)
+              ->whereIn('start_date', $selectedDates)
+              ->pluck('worker_id')
+              ->unique();
+      
+          return response()->json([
+              'overlapping' => $overlappingAssigns->isNotEmpty(),
+              'overlappingWorkerIds' => $overlappingWorkerIds,
+              'assignedWorkerIds' => $assignedWorkers 
+          ]);
+      }
+      public function getWorkerAssignments(Request $request)
+      {
+          $workerId = $request->input('worker_id');
+          $workplaceId = $request->input('workplace_id');
+      
+          $assignments = Assign::where('worker_id', $workerId)
+              ->where('show_flg', 1)
+              ->with('workplace')
+              ->get()
+              ->map(function ($assign) use ($workplaceId) {
+                  return [
+                      'start_date' => $assign->start_date,
+                      'end_date' => $assign->end_date,
+                      'workplace_id' => $assign->workplace_id,
+                      'is_current_workplace' => $assign->workplace_id == $workplaceId
+                  ];
+              });
+      
+          return response()->json(['assignments' => $assignments]);
+      }
+
+      public function getExistingAssigns(Request $request)
+      {
+          try {
+              $workplaceId = $request->input('workplace_id');
+              $workerId = $request->input('worker_id');
+      
+              Log::info('Fetching existing assigns', [
+                  'workplace_id' => $workplaceId,
+                  'worker_id' => $workerId
+              ]);
+      
+              $query = Assign::where('show_flg', 1);
+      
+              if ($workplaceId) {
+                  $query->where('workplace_id', $workplaceId);
+              }
+      
+              if ($workerId) {
+                  $query->where('worker_id', $workerId);
+              }
+      
+              if (!$workplaceId && !$workerId) {
+                  Log::warning('Both workplace_id and worker_id are missing');
+                  return response()->json([
+                      'success' => false,
+                      'message' => 'workplace_id または worker_id が必要です。'
+                  ], 400);
+              }
+      
+              $assigns = $query->get(['id', 'workplace_id', 'worker_id', 'start_date', 'end_date']);
+      
+              $formattedAssigns = $assigns->map(function ($assign) {
+                  return [
+                      'id' => $assign->id,
+                      'workplace_id' => $assign->workplace_id,
+                      'worker_id' => $assign->worker_id,
+                      'start_date' => $assign->start_date->format('Y-m-d'),
+                      'end_date' => $assign->end_date->format('Y-m-d'),
+                      'type' => 'existing-assign'
+                  ];
+              });
+      
+              Log::info('Existing assigns fetched successfully', [
+                  'count' => $assigns->count(),
+                  'assigns' => $formattedAssigns
+              ]);
+      
+              return response()->json([
+                  'success' => true,
+                  'assigns' => $formattedAssigns
+              ]);
+          } catch (\Exception $e) {
+              Log::error('Error fetching existing assigns', [
+                  'message' => $e->getMessage(),
+                  'trace' => $e->getTraceAsString()
+              ]);
+      
+              return response()->json([
+                  'success' => false,
+                  'message' => 'エラーが発生しました。'
+              ], 500);
+          }
+      }
 }

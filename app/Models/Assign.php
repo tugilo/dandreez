@@ -13,6 +13,15 @@ class Assign extends Model
     
     public $timestamps = true;
 
+    // 日付として扱うカラムを指定
+    protected $dates = [
+        'start_date',
+        'end_date',
+        'created_at',
+        'updated_at'
+    ];
+
+    
     // Saler（問屋）とのリレーション
     public function saler()
     {

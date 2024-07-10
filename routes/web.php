@@ -83,7 +83,11 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
     Route::post('workplaces/{role}/{id}/reject', [WorkplaceController::class, 'reject'])->name('saler.workplaces.reject')->defaults('role', 'saler');
     // アサインルート
     Route::post('workplaces/{id}/assign', [WorkplaceController::class, 'storeAssign'])->name('saler.workplaces.assign.store')->defaults('role', 'saler');
-    Route::post('workplaces/{id}/unassign', [WorkplaceController::class, 'unassignWorker'])->name('saler.workplaces.unassign')->defaults('role', 'saler');
+    Route::post('workplaces/{id}/unassign', [WorkplaceController::class, 'unassignWorker'])->name('saler.workplaces.unassign');
+    // 重複チェックルート
+    Route::post('workplaces/check-overlap', [WorkplaceController::class, 'checkOverlap'])->name('workplaces.check-overlap');
+    Route::get('workplaces/get-worker-assignments', [WorkplaceController::class, 'getWorkerAssignments'])->name('workplaces.get-worker-assignments');
+    Route::get('workplaces/get-existing-assigns', [WorkplaceController::class, 'getExistingAssigns'])->name('workplaces.get-existing-assigns');
 });
 
 // 施工業者用のルート
@@ -93,5 +97,3 @@ Route::prefix('worker')->middleware('auth', 'can:access-worker')->group(function
 
 // NotificationContent用のルート
 Route::resource('notification_contents', NotificationContentController::class)->middleware('auth');
-
-Route::post('/check-overlap', [WorkplaceController::class, 'checkOverlap'])->name('workplaces.check-overlap')->middleware('web');

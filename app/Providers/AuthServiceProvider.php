@@ -32,28 +32,28 @@ class AuthServiceProvider extends ServiceProvider
         // 管理者アクセス権限を持っているかどうかをチェック
         Gate::define('access-admin', function (Login $login) {
             $canAccess = $login->userType->type === 'admin';
-            Log::info('Admin Access Check:', ['user_id' => $login->id, 'can_access' => $canAccess]);
+//            Log::info('Admin Access Check:', ['user_id' => $login->id, 'can_access' => $canAccess]);
             return $canAccess;
         });
 
         // 得意先アクセス権限を持っているかどうかをチェック
         Gate::define('access-customer', function (Login $login) {
             $canAccess = $login->userType->type === 'customer';
-            Log::info('Customer Access Check:', ['user_id' => $login->id, 'can_access' => $canAccess]);
+//            Log::info('Customer Access Check:', ['user_id' => $login->id, 'can_access' => $canAccess]);
             return $canAccess;
         });
 
         // 問屋アクセス権限を持っているかどうかをチェック
         Gate::define('access-saler', function (Login $login) {
             $canAccess = $login->userType->type === 'saler';
-            Log::info('Saler Access Check:', ['user_id' => $login->id, 'can_access' => $canAccess]);
+//            Log::info('Saler Access Check:', ['user_id' => $login->id, 'can_access' => $canAccess]);
             return $canAccess;
         });
 
         // 施工業者アクセス権限を持っているかどうかをチェック
         Gate::define('access-worker', function (Login $login) {
             $canAccess = $login->userType->type === 'worker';
-            Log::info('Worker Access Check:', ['user_id' => $login->id, 'can_access' => $canAccess]);
+//            Log::info('Worker Access Check:', ['user_id' => $login->id, 'can_access' => $canAccess]);
             return $canAccess;
         });
 
