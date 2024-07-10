@@ -21,7 +21,7 @@ class AssignmentViewController extends Controller
         $workers = Worker::with(['assigns' => function ($query) use ($startDate, $endDate) {
             $query->whereBetween('start_date', [$startDate->toDateString(), $endDate->toDateString()])
                   ->where('show_flg', 1);
-        }, 'assigns.workplace.customer'])  // customer リレーションを追加
+        }, 'assigns.workplace.customer'])
             ->get();
 
         Log::info('取得した職人数', ['count' => $workers->count()]);

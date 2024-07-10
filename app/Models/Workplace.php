@@ -104,5 +104,9 @@ class Workplace extends Model
         return $this->hasMany(Assign::class);
     }
 
+    public function constructionCompany()
+    {
+        return $this->belongsTo(ConstructionCompany::class);
+    }
 
 }

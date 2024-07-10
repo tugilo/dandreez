@@ -16,6 +16,7 @@ use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationContentController;
 use App\Http\Controllers\AssignmentViewController;
+use App\Http\Controllers\SiteAssignmentViewController;
 
 // 標準の認証ルート（ログイン、ログアウト、パスワードリセット）
 Auth::routes();
@@ -100,6 +101,9 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
     // アサイン詳細情報取得用のAPI (必要に応じて)
     Route::get('assignments/details', [AssignmentViewController::class, 'getAssignmentDetails'])
         ->name('saler.assignments.details');
+    // 現場別アサイン状況ビューのルート
+    Route::get('/saler/assignments/sites', [SiteAssignmentViewController::class, 'siteView'])
+        ->name('saler.assignments.sites');
 });
 
 // 施工業者用のルート

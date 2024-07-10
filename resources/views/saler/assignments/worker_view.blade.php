@@ -9,15 +9,29 @@
 @section('content')
 <div class="card">
     <div class="card-header">
-        <!-- 月選択フォーム -->
-        <form action="{{ route('saler.assignments.workers') }}" method="GET" class="form-inline">
-            @csrf
-            <div class="form-group mr-2">
-                <label for="month" class="mr-2">月選択:</label>
-                <input type="month" id="month" name="month" value="{{ $month }}" class="form-control">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <!-- 前月へのリンク -->
+                <a href="{{ route('saler.assignments.workers', ['month' => Carbon\Carbon::parse($month)->subMonth()->format('Y-m')]) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-chevron-left"></i> 前月
+                </a>
             </div>
-            <button type="submit" class="btn btn-primary">表示</button>
-        </form>
+            <!-- 月選択フォーム -->
+            <form action="{{ route('saler.assignments.workers') }}" method="GET" class="form-inline">
+                @csrf
+                <div class="form-group mx-2">
+                    <label for="month" class="mr-2">月選択:</label>
+                    <input type="month" id="month" name="month" value="{{ $month }}" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary">表示</button>
+            </form>
+            <div>
+                <!-- 翌月へのリンク -->
+                <a href="{{ route('saler.assignments.workers', ['month' => Carbon\Carbon::parse($month)->addMonth()->format('Y-m')]) }}" class="btn btn-outline-secondary">
+                    翌月 <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
     </div>
 
     <div class="card-body">

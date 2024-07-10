@@ -438,7 +438,7 @@ return [
         ],
         [
             'text' => '現場別アサイン状況',
-            'url'  => 'saler/assignments/workplaces',
+            'url'  => 'saler/saler/assignments/sites',
             'icon' => 'fas fa-fw fa-building',
         ],
 // 施工業者専用

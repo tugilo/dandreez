@@ -669,4 +669,78 @@ class WorkplaceController extends Controller
               ], 500);
           }
       }
+    
+      /**
+     * カレンダーからのアサイン登録・更新
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function storeAssignFromCalendar(Request $request)
+    {
+        Log::info('storeAssignFromCalendar request data:', $request->all());
+    
+        $validator = Validator::make($request->all(), [
+            'workplace_id' => 'required|exists:workplaces,id',
+            'worker_id' => 'required|exists:workers,id',
+            'assign_date' => 'required|date',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+    
+        DB::beginTransaction();
+    
+        try {
+            $workplace = Workplace::findOrFail($request->workplace_id);
+            $worker = Worker::findOrFail($request->worker_id);
+    
+            $assignData = [
+                'workplace_id' => $request->workplace_id,
+                'worker_id' => $request->worker_id,
+                'start_date' => $request->assign_date,
+                'end_date' => $request->assign_date,
+                'saler_id' => $workplace->saler_id,
+                'saler_staff_id' => $workplace->saler_staff_id,
+                'show_flg' => 1,
+            ];
+    
+            // 建設会社IDがある場合のみ設定
+            if ($workplace->construction_company_id) {
+                $assignData['construction_company_id'] = $workplace->construction_company_id;
+            } elseif ($worker->construction_company_id) {
+                $assignData['construction_company_id'] = $worker->construction_company_id;
+            }
+    
+            $assign = Assign::updateOrCreate(
+                [
+                    'workplace_id' => $request->workplace_id,
+                    'worker_id' => $request->worker_id,
+                    'start_date' => $request->assign_date,
+                    'end_date' => $request->assign_date,
+                ],
+                $assignData
+            );
+    
+            if ($workplace->status_id == 1) {
+                $workplace->status_id = 3;
+                $workplace->save();
+            }
+    
+            DB::commit();
+    
+            Log::info('Assign created/updated successfully', ['assign_id' => $assign->id]);
+    
+            return response()->json(['success' => true, 'message' => 'アサインが正常に更新されました。']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error in storeAssignFromCalendar', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            return response()->json(['success' => false, 'message' => 'アサインの更新中にエラーが発生しました。: ' . $e->getMessage()], 500);
+        }
+    }
 }
