@@ -14,6 +14,55 @@ class Worker extends Model
     
     public $timestamps = true;
 
+    /**
+     * 特定の期間内のアサインを取得
+     */
+    public function getAssignmentsForPeriod($startDate, $endDate)
+    {
+        return $this->assigns()
+            ->whereBetween('start_date', [$startDate, $endDate])
+            ->orWhereBetween('end_date', [$startDate, $endDate])
+            ->orWhere(function ($query) use ($startDate, $endDate) {
+                $query->where('start_date', '<=', $startDate)
+                      ->where('end_date', '>=', $endDate);
+            })
+            ->with('workplace')
+            ->get();
+    }
+    /**
+     * 特定の日のアサインを取得
+     */
+    public function getAssignmentsForDate($date)
+    {
+        return $this->assigns()
+            ->whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date)
+            ->with('workplace')
+            ->get();
+    }
+
+    /**
+     * スケジュールの重複をチェック
+     */
+    public function hasScheduleConflict($startDate, $endDate, $excludeAssignId = null)
+    {
+        $query = $this->assigns()
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('start_date', [$startDate, $endDate])
+                    ->orWhereBetween('end_date', [$startDate, $endDate])
+                    ->orWhere(function ($query) use ($startDate, $endDate) {
+                        $query->where('start_date', '<=', $startDate)
+                              ->where('end_date', '>=', $endDate);
+                    });
+            });
+
+        if ($excludeAssignId) {
+            $query->where('id', '!=', $excludeAssignId);
+        }
+
+        return $query->exists();
+    }
+
     // リレーション: 施工会社との1対多の関係
     public function constructionCompany()
     {
@@ -38,7 +87,7 @@ class Worker extends Model
      */
     public function receivedNotifications()
     {
-        return $this->morphMany(NotificationRecipient::class, 'recipient');
+        return $this->morphMany(NotificationReceiver::class, 'recipient');
     }
     
     // Assign（割り当て）とのリレーション
@@ -46,5 +95,6 @@ class Worker extends Model
     {
         return $this->hasMany(Assign::class);
     }
+
 
 }

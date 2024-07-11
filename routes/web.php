@@ -109,6 +109,13 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
 // 施工業者用のルート
 Route::prefix('worker')->middleware('auth', 'can:access-worker')->group(function () {
     Route::get('home', [WorkerController::class, 'index'])->name('worker.home');
+    // 日報関連のルート
+    Route::get('report/create', [WorkerController::class, 'createReport'])->name('worker.report.create');
+    Route::post('report', [WorkerController::class, 'storeReport'])->name('worker.report.store');
+
+    // アサイン詳細表示のルート
+    Route::get('assignment/{assign}', [WorkerController::class, 'showAssignment'])->name('worker.assignment.show');
+    Route::get('file/{file}/download', [WorkerController::class, 'downloadFile'])->name('worker.file.download');
 });
 
 // NotificationContent用のルート

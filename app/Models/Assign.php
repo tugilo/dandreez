@@ -21,7 +21,11 @@ class Assign extends Model
         'updated_at'
     ];
 
-    
+    protected $casts = [
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
+    ];
+
     // Saler（問屋）とのリレーション
     public function saler()
     {
@@ -50,5 +54,11 @@ class Assign extends Model
     public function worker()
     {
         return $this->belongsTo(Worker::class);
+    }
+
+    // 新しく追加: 日報とのリレーション
+    public function dailyreports()
+    {
+        return $this->hasMany(Dailyreport::class);
     }
 }

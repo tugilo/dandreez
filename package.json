@@ -5,20 +5,24 @@
         "build": "vite build"
     },
     "devDependencies": {
+        "@babel/preset-react": "^7.24.7",
         "@popperjs/core": "^2.11.6",
+        "@vitejs/plugin-react": "^4.3.1",
         "@vitejs/plugin-vue": "^4.5.0",
         "axios": "^1.1.2",
         "bootstrap": "^5.2.3",
         "gulp": "^5.0.0",
+        "laravel-mix": "^6.0.49",
         "laravel-vite-plugin": "^0.7.2",
         "lodash": "^4.17.19",
         "postcss": "^8.1.14",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
         "sass": "^1.56.1",
         "vite": "^4.0.0",
         "vue": "^3.2.37"
     },
     "dependencies": {
-        "bootstrap-datepicker": "^1.10.0",
-        "laravel-mix": "^6.0.49"
+        "bootstrap-datepicker": "^1.10.0"
     }
 }

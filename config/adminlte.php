@@ -435,11 +435,13 @@ return [
             'text' => '職人別アサイン状況',
             'url'  => 'saler/assignments/workers',
             'icon' => 'fas fa-fw fa-user-clock',
+            'can'  => 'access-saler'
         ],
         [
             'text' => '現場別アサイン状況',
             'url'  => 'saler/saler/assignments/sites',
             'icon' => 'fas fa-fw fa-building',
+            'can'  => 'access-saler'
         ],
 // 施工業者専用
         [

@@ -112,8 +112,16 @@
                     <div class="form-group">
                         <label for="workerId">職人</label>
                         <select class="form-control" id="workerId" name="worker_id" required>
-                            <!-- 職人のオプションはJavaScriptで動的に追加します -->
+                            <!-- 職人のオプションはJavaScriptで動的に追加 -->
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="startTime">開始時間</label>
+                        <input type="time" class="form-control" id="startTime" name="start_time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">終了時間</label>
+                        <input type="time" class="form-control" id="endTime" name="end_time" required>
                     </div>
                 </form>
             </div>
@@ -208,7 +216,7 @@ function submitAssign() {
         success: function(response) {
             if(response.success) {
                 alert('アサインが成功しました');
-                location.reload(); // ページをリロードして更新を反映
+                location.reload();
             } else {
                 alert('アサインに失敗しました: ' + (response.message || '不明なエラー'));
             }

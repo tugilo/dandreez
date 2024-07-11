@@ -35,8 +35,8 @@ class Notification extends Model
      * 通知の受信者のリレーション
      * 通知は得意先スタッフ、問屋スタッフ、施工業者スタッフに送信される
      */
-    public function recipients()
+    public function receivers()
     {
-        return $this->belongsToMany(User::class, 'notification_recipients');
+        return $this->hasMany(NotificationReceiver::class);
     }
 }

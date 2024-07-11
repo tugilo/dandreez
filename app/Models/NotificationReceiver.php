@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class NotificationRecipient extends Model
+class NotificationReceiver extends Model
 {
     use HasFactory;
 

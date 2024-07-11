@@ -13,6 +13,12 @@ class Dailyreport extends Model
     
     public $timestamps = true;
 
+    protected $dates = [
+        'report_day',
+        'created_at',
+        'updated_at'
+    ];
+
     // リレーション: 現場との1対多の関係
     public function workplace()
     {
@@ -53,5 +59,11 @@ class Dailyreport extends Model
     public function worker()
     {
         return $this->belongsTo(Worker::class);
+    }
+
+    // 新しく追加: アサインとの関係
+    public function assign()
+    {
+        return $this->belongsTo(Assign::class);
     }
 }
