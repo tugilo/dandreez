@@ -443,7 +443,7 @@ return [
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-saler'
         ],
-// 施工業者専用
+        // 施工業者専用
         [
             'header' => '施工業者専用',
             'can'  => 'access-worker'
@@ -454,7 +454,13 @@ return [
             'icon' => 'fas fa-fw fa-tachometer-alt',
             'can'  => 'access-worker'
         ],
-
+        [
+            'text' => '現場一覧',
+            'url'  => 'worker/workplaces',
+            'icon' => 'fas fa-building',
+            'can'  => 'access-worker',
+        ],
+    
     ],
 
     /*

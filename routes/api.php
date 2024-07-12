@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\WorkplaceController;
+use App\Models\Zip;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,3 +24,15 @@ Route::get('/workers-for-workplace/{workplace}', [ApiController::class, 'getWork
 Route::post('/assign', [ApiController::class, 'createAssign']);
 
 Route::post('/assign-from-calendar', [WorkplaceController::class, 'storeAssignFromCalendar']);
+Route::get('/address', function (Request $request) {
+    $zip = $request->query('zip');
+    $address = Zip::where('zip', $zip)->first();
+    if ($address) {
+        return response()->json([
+            'prefecture' => $address->prefecture,
+            'city' => $address->city,
+            'address' => $address->address
+        ]);
+    }
+    return response()->json(null);
+});

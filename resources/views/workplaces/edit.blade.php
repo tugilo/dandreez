@@ -39,6 +39,38 @@
                     @enderror
                 </div>
 
+                <div class="form-group">
+                    <label for="zip">郵便番号</label>
+                    <input type="text" class="form-control" id="zip" name="zip" value="{{ old('zip', $workplace->zip ?? '') }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="prefecture">都道府県</label>
+                    <select class="form-control" id="prefecture" name="prefecture" >
+                        <option value="">選択してください</option>
+                        @foreach($prefectures as $pref)
+                            <option value="{{ $pref->prefecture }}" {{ (old('prefecture', $workplace->prefecture ?? '') == $pref->prefecture) ? 'selected' : '' }}>
+                                {{ $pref->prefecture }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+    
+                <div class="form-group">
+                    <label for="city">市区町村</label>
+                    <input type="text" class="form-control" id="city" name="city" value="{{ old('city', $workplace->city ?? '') }}" >
+                </div>
+    
+                <div class="form-group">
+                    <label for="address">番地</label>
+                    <input type="text" class="form-control" id="address" name="address" value="{{ old('address', $workplace->address ?? '') }}" >
+                </div>
+    
+                <div class="form-group">
+                    <label for="building">建物名・部屋番号</label>
+                    <input type="text" class="form-control" id="building" name="building" value="{{ old('building', $workplace->building ?? '') }}">
+                </div>
+    
                 <!-- 施工開始日 -->
                 <div class="form-group">
                     <label for="construction_start">施工開始日</label>
@@ -110,6 +142,7 @@
     <!-- Bootstrap Datepicker JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.ja.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         $(function() {
             // Datepickerの初期化
@@ -119,6 +152,22 @@
                 language: 'ja',
                 todayHighlight: true
             });
+        });
+        document.getElementById('zip').addEventListener('blur', function() {
+            var zip = this.value;
+            if (zip.length === 7) {
+                axios.get(`/api/address?zip=${zip}`)
+                    .then(function (response) {
+                        if (response.data) {
+                            document.getElementById('prefecture').value = response.data.prefecture;
+                            document.getElementById('city').value = response.data.city;
+                            document.getElementById('address').value = response.data.address;
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            }
         });
     </script>
 @stop

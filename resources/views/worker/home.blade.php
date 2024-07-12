@@ -13,7 +13,7 @@
                 <span class="info-box-icon bg-info"><i class="far fa-calendar-check"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">今日の予定</span>
-                    @if($todayAssignment)
+                    @if($todayAssignment && $todayAssignment->workplace && $todayAssignment->start_time && $todayAssignment->end_time)
                         <span class="info-box-number">{{ $todayAssignment->workplace->name }}</span>
                         <span>{{ $todayAssignment->start_time->format('H:i') }} - {{ $todayAssignment->end_time->format('H:i') }}</span>
                     @else
@@ -57,7 +57,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">今週の作業予定</h3>
+                    <h3 class="card-title">スケジュール</h3>
                 </div>
                 <div class="card-body">
                     <div id="calendar"></div>
@@ -101,41 +101,135 @@
 
 @section('css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.css">
+    <style>
+    .fc .fc-toolbar {
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 1.2em;
+        margin: 0;
+    }
+
+    .fc .fc-button {
+        padding: 5px 10px;
+        font-size: 0.9em;
+    }
+
+    @media (max-width: 768px) {
+        .fc .fc-toolbar {
+            flex-direction: column;
+        }
+        .fc .fc-toolbar-title {
+            margin: 10px 0;
+        }
+        .fc .fc-button-group {
+            margin-bottom: 10px;
+        }
+    }
+    </style>
 @stop
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridWeek',
-                locale: 'ja',
-                events: [
-                    @foreach($weeklyAssignments as $date => $assignments)
-                        @foreach($assignments as $assignment)
-                            {
-                                title: '{{ $assignment->workplace->name }}',
-                                start: '{{ $assignment->start_date->format('Y-m-d') }}T{{ $assignment->start_time ? $assignment->start_time->format('H:i:s') : '09:00:00' }}',
-                                end: '{{ $assignment->start_date->format('Y-m-d') }}T{{ $assignment->end_time ? $assignment->end_time->format('H:i:s') : '17:00:00' }}',
-                                url: '{{ route('worker.assignment.show', $assignment->id) }}'
-                            },
-                        @endforeach
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            buttonText: {
+                today: '今日',
+                month: '月',
+                week: '週',
+                day: '日'
+            },
+            javascriptCopydatesSet: function(dateInfo) {
+                const view = dateInfo.view;
+                const start = dateInfo.start;
+                const end = dateInfo.end;
+                let title = '';
+
+                if (view.type === 'dayGridMonth') {
+                    title = `${start.getFullYear()}年${start.getMonth() + 1}月`;
+                } else if (view.type === 'timeGridWeek') {
+                    const endDate = new Date(end);
+                    endDate.setDate(endDate.getDate() - 1);
+                    title = `${start.getFullYear()}年${start.getMonth() + 1}月${start.getDate()}日 - ${endDate.getDate()}日`;
+                } else {
+                    title = `${start.getFullYear()}年${start.getMonth() + 1}月${start.getDate()}日`;
+                }
+
+                calendar.setOption('headerToolbar', {
+                    left: 'prev,next today',
+                    center: title,
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                });
+            },
+            initialView: 'timeGridWeek',
+            locale: 'ja',
+            height: 'auto',
+            allDaySlot: false,
+            slotDuration: '01:00:00',
+            slotLabelInterval: '01:00:00',
+            slotLabelFormat: {
+                hour: 'numeric',
+                minute: '2-digit',
+                omitZeroMinute: true,
+                meridiem: 'short'
+            },
+            events: [
+                @foreach($weeklyAssignments as $date => $assignments)
+                    @foreach($assignments as $assignment)
+                        {
+                            title: '{{ $assignment->workplace->name }}',
+                            start: '{{ $assignment->start_date->format('Y-m-d') }}T{{ $assignment->start_time ? $assignment->start_time->format('H:i:s') : '09:00:00' }}',
+                            end: '{{ $assignment->start_date->format('Y-m-d') }}T{{ $assignment->end_time ? $assignment->end_time->format('H:i:s') : '17:00:00' }}',
+                            url: '{{ route('worker.assignment.show', $assignment->id) }}'
+                        },
                     @endforeach
-                ]
-            });
-            calendar.render();
+                @endforeach
+            ]
         });
+        calendar.render();
 
         // 作業開始・終了ボタンのイベントリスナー
         document.getElementById('startWork').addEventListener('click', function() {
-            // 作業開始処理のAjaxリクエスト
-            alert('作業を開始しました。');  // 仮の実装
+            fetch('/worker/start-work', { 
+                method: 'POST', 
+                headers: { 
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => alert(data.message))
+            .catch(error => console.error('Error:', error));
         });
 
         document.getElementById('endWork').addEventListener('click', function() {
-            // 作業終了処理のAjaxリクエスト
-            alert('作業を終了しました。');  // 仮の実装
+            fetch('/worker/end-work', { 
+                method: 'POST', 
+                headers: { 
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.message.includes('日報の作成をお願いします')) {
+                    window.location.href = '{{ route('worker.report.create') }}';
+                }
+            })
+            .catch(error => console.error('Error:', error));
         });
+    });
     </script>
 @stop

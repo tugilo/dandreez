@@ -116,6 +116,13 @@ Route::prefix('worker')->middleware('auth', 'can:access-worker')->group(function
     // アサイン詳細表示のルート
     Route::get('assignment/{assign}', [WorkerController::class, 'showAssignment'])->name('worker.assignment.show');
     Route::get('file/{file}/download', [WorkerController::class, 'downloadFile'])->name('worker.file.download');
+
+    //作業開始、終了のルート
+    Route::post('start-work', [WorkerController::class, 'startWork'])->name('worker.start-work');
+    Route::post('end-work', [WorkerController::class, 'endWork'])->name('worker.end-work');
+    // 現場一覧ルートを追加
+    Route::get('workplaces', [WorkerController::class, 'workplaceIndex'])->name('worker.workplaces.index');
+    Route::get('workplaces/{workplace}', [WorkerController::class, 'workplaceShow'])->name('worker.workplaces.show');
 });
 
 // NotificationContent用のルート

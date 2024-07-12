@@ -17,14 +17,16 @@ class WorkerController extends Controller
     {
         $worker = auth()->user()->worker;
         
-        $todayAssignment = $this->getTodayAssignment($worker);
+        $todayAssignment = $worker->assigns()
+            ->with('workplace')
+            ->whereDate('start_date', now())
+            ->first();
+
         $weeklyAssignments = $this->getWeeklyAssignments($worker);
         $recentWork = $this->getRecentWork($worker);
         $pendingReports = $this->getPendingReports($worker);
+        $notifications = $this->getNotifications($worker);
         $nextWorkplace = $this->getNextWorkplace($worker);
-
-        // 通知機能を一時的に無効化
-        $notifications = [];
 
         return view('worker.home', compact(
             'worker',
@@ -98,6 +100,7 @@ class WorkerController extends Controller
             return back()->withInput()->with('error', 'エラーが発生しました: ' . $e->getMessage());
         }
     }        
+
     public function showAssignment(Assign $assign)
     {
         // 現在のワーカーに関連するアサインのみを表示できるようにする
@@ -120,14 +123,6 @@ class WorkerController extends Controller
     
         $filePath = storage_path('app/public/' . $file->directory . $file->file_name);
         return response()->download($filePath, $file->title);
-    }
-
-    private function getTodayAssignment($worker)
-    {
-        return $worker->assigns()
-            ->whereDate('start_date', Carbon::today())
-            ->with('workplace')
-            ->first();
     }
 
     private function getWeeklyAssignments($worker)
@@ -175,5 +170,72 @@ class WorkerController extends Controller
             ->where('start_date', '>', Carbon::now())
             ->with('workplace', 'workplace.instructions')
             ->first();
+    }
+
+    public function startWork(Request $request)
+    {
+        $worker = auth()->user()->worker;
+        $currentAssignment = $worker->getCurrentAssignment();
+        
+        if ($currentAssignment) {
+            // 作業開始時間を記録
+            $currentAssignment->update(['actual_start_time' => now()]);
+            return response()->json(['message' => '作業を開始しました。']);
+        }
+        
+        return response()->json(['message' => '本日の予定がありません。'], 400);
+    }
+
+    public function endWork(Request $request)
+    {
+        $worker = auth()->user()->worker;
+        $currentAssignment = $worker->getCurrentAssignment();
+        
+        if ($currentAssignment && $currentAssignment->actual_start_time) {
+            // 作業終了時間を記録
+            $currentAssignment->update(['actual_end_time' => now()]);
+            return response()->json(['message' => '作業を終了しました。日報の作成をお願いします。']);
+        }
+        
+        return response()->json(['message' => '作業が開始されていません。'], 400);
+    }
+    public function workplaceIndex()
+    {
+        Log::info('現場一覧の表示を開始');
+
+        $worker = auth()->user()->worker;
+        Log::debug('worker', ['worker' => $worker]);
+
+        $workplaces = Workplace::whereHas('assigns', function($query) use ($worker) {
+            $query->where('worker_id', $worker->id)
+                  ->whereDate('start_date', '>=', now());
+        })
+        ->with(['customer', 'assigns' => function($query) use ($worker) {
+            $query->where('worker_id', $worker->id)
+                  ->orderBy('start_date');
+        }])
+        ->get()
+        ->map(function ($workplace) {
+            $workplace->period_start = $workplace->assigns->min('start_date');
+            $workplace->period_end = $workplace->assigns->max('end_date');
+            return $workplace;
+        });
+        Log::debug('workplaces', ['workplaces' => $workplaces]);
+  
+        return view('worker.workplaces.index', compact('workplaces'));
+    }
+
+    public function workplaceShow(Workplace $workplace)
+    {
+        // 現在のワーカーに関連するアサインメントのみを取得
+        $assignments = $workplace->assigns()
+            ->where('worker_id', auth()->user()->worker->id)
+            ->orderBy('start_date')
+            ->get();
+
+        $workplace->period_start = $assignments->min('start_date');
+        $workplace->period_end = $assignments->max('end_date');
+
+        return view('worker.workplaces.show', compact('workplace', 'assignments'));
     }
 }

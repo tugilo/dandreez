@@ -14,6 +14,7 @@ use App\Models\Unit;
 use App\Models\Instruction;
 use App\Models\Photo;
 use App\Models\File;
+use App\Models\Zip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -67,15 +68,17 @@ class WorkplaceController extends Controller
         if ($role == 'customer') {
             $salers = Saler::where('show_flg', 1)->get();
             $customer = Auth::user()->customerStaff->customer;
+            $prefectures = Zip::getPrefectures();
             $routes = $this->getRoutesByRole($role);
             $storeRoute = $routes['storeRoute'];
-            return view('workplaces.create', array_merge(compact('salers', 'customer', 'role', 'storeRoute'), $routes));
+            return view('workplaces.create', array_merge(compact('salers', 'customer', 'prefectures', 'role', 'storeRoute'), $routes));
         } elseif ($role == 'saler') {
             $customers = Customer::where('show_flg', 1)->get();
             $saler = Auth::user()->salerStaff->saler;
+            $prefectures = Zip::getPrefectures();
             $routes = $this->getRoutesByRole($role);
             $storeRoute = $routes['storeRoute'];
-            return view('workplaces.create', array_merge(compact('customers', 'saler', 'role', 'storeRoute'), $routes));
+            return view('workplaces.create', array_merge(compact('customers', 'saler', 'prefectures', 'role', 'storeRoute'), $routes));
         }
     }
 
@@ -283,14 +286,15 @@ class WorkplaceController extends Controller
         $salers = Saler::where('show_flg', 1)->get();
         $routes = $this->getRoutesByRole($role);
         $viewPath = resource_path('views/workplaces/edit.blade.php');
-    
+        $prefectures = Zip::getPrefectures();
+   
         if (!file_exists($viewPath)) {
             Log::error('editメソッドのビューが存在しません', ['viewPath' => $viewPath]);
         } else {
             Log::info('editメソッドのビューが存在します', ['viewPath' => $viewPath]);
         }
     
-        return view('workplaces.edit', array_merge(compact('workplace', 'salers', 'role'), $routes));
+        return view('workplaces.edit', array_merge(compact('workplace','prefectures', 'salers', 'role'), $routes));
     }
             
     /**

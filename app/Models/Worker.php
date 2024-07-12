@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Worker extends Model
 {
@@ -96,5 +97,19 @@ class Worker extends Model
         return $this->hasMany(Assign::class);
     }
 
+    /**
+     * 現在のアサインを取得
+     */
+    public function getCurrentAssignment()
+    {
+        return $this->assigns()
+            ->whereDate('start_date', now())
+            ->where(function($query) {
+                $query->whereNull('actual_start_time')
+                    ->orWhereNull('actual_end_time');
+            })
+            ->orderBy('start_time')
+            ->first();
+    }
 
 }
