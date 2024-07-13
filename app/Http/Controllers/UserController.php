@@ -12,12 +12,14 @@ use App\Models\Role;
 use App\Models\Customer;
 use App\Models\Saler;
 use App\Models\ConstructionCompany;
+use App\Mail\UserRegistered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -38,8 +40,10 @@ class UserController extends Controller
             'roles_count' => $roles->count(),
             'user_types_count' => $userTypes->count()
         ]);
+        // 会社リストを初期化
+        $companies = collect();
 
-        return view('users.create', compact('userTypes', 'roles'));
+        return view('users.create', compact('userTypes', 'roles', 'companies'));
     }
 
     /**
@@ -96,8 +100,34 @@ class UserController extends Controller
             return redirect()->back()->withErrors(['error' => 'ユーザーの作成に失敗しました。'])->withInput();
         }
     }
+    /**
+     * 新規登録ユーザーにウェルカムメールを送信します。
+     *
+     * @param mixed $user 登録されたユーザーオブジェクト
+     * @param string $loginId ログインID
+     * @param string $password パスワード
+     * @return void
+     */
+    private function sendWelcomeEmail($user, $loginId, $password)
+    {
+        try {
+            // ログインURLを生成
+            $loginUrl = route('login');
 
-/**
+            // メールを送信
+            Mail::to($user->email)->send(new UserRegistered($loginId, $password, $loginUrl));
+
+            Log::info('ウェルカムメールを送信しました', ['email' => $user->email]);
+        } catch (\Exception $e) {
+            // メール送信に失敗した場合はログに記録
+            Log::error('ウェルカムメールの送信に失敗しました', [
+                'email' => $user->email,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * ユーザー一覧を表示します。
      *
      * @return \Illuminate\View\View
@@ -393,7 +423,7 @@ class UserController extends Controller
             case 'worker':
                 return 'construction_companies';
             default:
-                throw new \InvalidArgumentException('Invalid user type for company');
+                return 'admin';
         }
     }
 
@@ -467,6 +497,19 @@ class UserController extends Controller
         Log::info('会社一覧の取得を完了', ['companies_count' => $companies->count()]);
 
         return $companies;
+    }
+
+    public function getCompaniesByType(Request $request)
+    {
+        $userTypeId = $request->input('user_type_id');
+        $userType = UserType::find($userTypeId);
+    
+        if ($userType) {
+            $companies = $this->getCompanies($userType->type);
+            return response()->json($companies);
+        }
+    
+        return response()->json([]);
     }
     /**
      * ユーザーの会社IDを取得します。

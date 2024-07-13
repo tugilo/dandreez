@@ -127,3 +127,6 @@ Route::prefix('worker')->middleware('auth', 'can:access-worker')->group(function
 
 // NotificationContent用のルート
 Route::resource('notification_contents', NotificationContentController::class)->middleware('auth');
+Route::get('/users/get-companies-by-type', [UserController::class, 'getCompaniesByType'])
+    ->name('users.getCompaniesByType')
+    ->middleware('auth');  // 認証済みユーザーのみアクセス可能
