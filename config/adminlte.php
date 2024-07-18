@@ -284,6 +284,16 @@ return [
     'menu' => [
         // Admin専用
         [
+            'header' => '管理者専用',
+            'can'  => 'access-admin'
+        ],
+        [
+            'text' => 'ダッシュボード',
+            'url' => 'admin/home',
+            'icon' => 'fas fa-fw fa-tachometer-alt',
+            'can'  => 'access-admin'
+        ],
+        [
             'header' => 'ユーザー管理',
             'can'  => 'access-admin'
         ],

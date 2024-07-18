@@ -41,6 +41,11 @@ class LoginController extends Controller
 
         if ($login && Auth::validate($credentials)) {
             Auth::login($login, $request->filled('remember'));
+
+            // last_login_at を更新
+            $login->last_login_at = now();
+            $login->save();
+
             $userType = $login->userType;
             Log::debug('Authentication successful');
 
