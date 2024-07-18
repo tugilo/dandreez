@@ -70,7 +70,7 @@
     <!-- DataTablesのCSSを読み込み -->
     <link href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap4.min.css" rel="stylesheet">
     <style>
-        #users-table th, #users-table td {
+        #customer-companies-table th, #customer-companies-table td {
             white-space: nowrap;  // テキストが折り返さないように設定
             padding-top: 8px;  // 上のパディングを調整
             padding-bottom: 8px;  // 下のパディングを調整
