@@ -37,24 +37,23 @@ class WorkplaceController extends Controller
                 $workplace->construction_end = $workplace->construction_end ? $workplace->construction_end->format('Y-m-d') : null;
                 return $workplace;
             });
-        // ログ出力
-        Log::info('Workplaces data:', ['workplaces' => $workplaces]);
     
-        foreach ($workplaces as $workplace) {
-            $workplace->assignedWorkers = $workplace->assigns->where('show_flg', 1);
-        }
-        
+        // 既存のアサイン情報を取得
+        $assigns = Assign::with('worker')
+            ->where('show_flg', 1)
+            ->get()
+            ->groupBy('workplace_id');
+    
         $constructionCompanies = ConstructionCompany::where('show_flg', 1)->get();
         $workers = Worker::where('show_flg', 1)->get();
     
         $routes = $this->getRoutesByRole($role);
     
         return view('workplaces.index', array_merge(
-            compact('workplaces', 'role', 'constructionCompanies', 'workers'),
+            compact('workplaces', 'role', 'constructionCompanies', 'workers', 'assigns'),
             $routes
         ));
-    }
-    
+    }    
     /**
      * 新規施工依頼のフォームを表示
      *
@@ -463,8 +462,6 @@ class WorkplaceController extends Controller
         $selectedDates = json_decode($request->input('selected_dates'), true) ?? [];
         $removedDates = json_decode($request->input('removed_dates'), true) ?? [];
         $role = $request->input('role', 'saler');
-        $startTime = $request->input('start_time');
-        $endTime = $request->input('end_time');
         
         Log::info('Decoded data:', [
             'selectedDates' => $selectedDates,
@@ -475,21 +472,21 @@ class WorkplaceController extends Controller
     
         try {
             // 新しく選択された日付に対してアサインを作成または更新
-            foreach ($selectedDates as $date) {
+            foreach ($selectedDates as $dateInfo) {
                 Assign::updateOrCreate(
                     [
                         'workplace_id' => $id,
                         'worker_id' => $workerId,
-                        'start_date' => $date,
-                        'end_date' => $date,
+                        'start_date' => $dateInfo['date'],
+                        'end_date' => $dateInfo['date'],
                     ],
                     [
                         'construction_company_id' => $constructionCompanyId,
                         'saler_id' => $workplace->saler_id,
                         'saler_staff_id' => $workplace->saler_staff_id,
                         'show_flg' => 1,
-                        'start_time' => $startTime,
-                        'end_time' => $endTime,
+                        'start_time' => $dateInfo['start_time'],
+                        'end_time' => $dateInfo['end_time'],
                     ]
                 );
             }
@@ -522,9 +519,7 @@ class WorkplaceController extends Controller
                 'workplace_id' => $id,
                 'worker_id' => $workerId,
                 'selected_dates' => $selectedDates,
-                'removed_dates' => $removedDates,
-                'start_time' => $startTime,
-                'end_time' => $endTime
+                'removed_dates' => $removedDates
             ]);
     
             return redirect()->route($this->getRoutesByRole($role)['indexRoute'], ['role' => $role])
@@ -538,9 +533,7 @@ class WorkplaceController extends Controller
     
             return redirect()->back()->with('error', 'アサインの更新中にエラーが発生しました。');
         }
-    }
-    
-    
+    }    
     /**
      * * 職人のアサインを解除するメソッド
      * *
@@ -637,24 +630,16 @@ class WorkplaceController extends Controller
                   $query->where('worker_id', $workerId);
               }
       
-              if (!$workplaceId && !$workerId) {
-                  Log::warning('Both workplace_id and worker_id are missing');
-                  return response()->json([
-                      'success' => false,
-                      'message' => 'workplace_id または worker_id が必要です。'
-                  ], 400);
-              }
-      
-              $assigns = $query->get(['id', 'workplace_id', 'worker_id', 'start_date', 'end_date']);
+              $assigns = $query->get();
       
               $formattedAssigns = $assigns->map(function ($assign) {
                   return [
                       'id' => $assign->id,
                       'workplace_id' => $assign->workplace_id,
                       'worker_id' => $assign->worker_id,
-                      'start_date' => $assign->start_date->format('Y-m-d'),
-                      'end_date' => $assign->end_date->format('Y-m-d'),
-                      'type' => 'existing-assign'
+                      'date' => $assign->start_date->format('Y-m-d'),
+                      'start_time' => $assign->start_time,
+                      'end_time' => $assign->end_time,
                   ];
               });
       
@@ -679,7 +664,7 @@ class WorkplaceController extends Controller
               ], 500);
           }
       }
-    
+
       /**
      * カレンダーからのアサイン登録・更新
      *

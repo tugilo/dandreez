@@ -98,15 +98,20 @@
                     @foreach($latestWorkplaces as $workplace)
                         <li class="list-group-item">
                             <h5>{{ $workplace->name }}</h5>
-                            <p>得意先: {{ $workplace->customer->name }}</p>
-                            <p>期間: {{ $workplace->construction_start->format('Y/m/d') }} - {{ $workplace->construction_end->format('Y/m/d') }}</p>
+                            <p>得意先: {{ $workplace->customer->name ?? '未設定' }}</p>
+                            <p>期間: 
+                                @if($workplace->construction_start && $workplace->construction_end)
+                                    {{ $workplace->construction_start->format('Y/m/d') }} - {{ $workplace->construction_end->format('Y/m/d') }}
+                                @else
+                                    未設定
+                                @endif
+                            </p>
                         </li>
                     @endforeach
                 </ul>
             </div>
         </div>
-    </div>
-</div>
+    </div></div>
 
 <div class="row mt-4">
     <!-- カレンダー -->
