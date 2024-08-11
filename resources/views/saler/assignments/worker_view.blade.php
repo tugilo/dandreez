@@ -85,6 +85,100 @@
         </div>
     </div>
 </div>
+<!-- 未アサインの現場セクション -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h3 class="card-title">未アサインの現場</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>現場名</th>
+                        <th>得意先名</th>
+                        <th>施工期間</th>
+                        <th>未アサイン日</th>
+                        <th>アクション</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($unassignedWorkplaces as $workplace)
+                        <tr>
+                            <td>{{ $workplace->name }}</td>
+                            <td>{{ $workplace->customer->name }}</td>
+                            <td>{{ $workplace->construction_start->format('Y/m/d') }} 〜 {{ $workplace->construction_end->format('Y/m/d') }}</td>
+                            <td>
+                                @foreach($workplace->unassigned_dates as $date)
+                                    <span class="badge badge-warning">{{ \Carbon\Carbon::parse($date)->format('m/d') }}</span>
+                                @endforeach
+                            </td>
+                            <td>
+                                <button class="btn btn-primary btn-sm assign-worker" 
+                                        data-workplace-id="{{ $workplace->id }}"
+                                        data-workplace-name="{{ $workplace->name }}"
+                                        data-start-date="{{ $workplace->construction_start->format('Y-m-d') }}"
+                                        data-end-date="{{ $workplace->construction_end->format('Y-m-d') }}"
+                                        data-unassigned-dates="{{ json_encode($workplace->unassigned_dates) }}"
+                                        data-toggle="modal" 
+                                        data-target="#assignWorkerModal">
+                                    職人をアサイン
+                                </button>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- アサインモーダル -->
+<div class="modal fade" id="assignWorkerModal" tabindex="-1" role="dialog" aria-labelledby="assignWorkerModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignWorkerModalLabel">職人をアサイン</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="assignWorkerForm">
+                    @csrf
+                    <input type="hidden" id="workplace_id" name="workplace_id">
+                    <div class="form-group">
+                        <label for="worker_id">職人選択</label>
+                        <select class="form-control" id="worker_id" name="worker_id" required>
+                            @foreach($workers as $worker)
+                                <option value="{{ $worker->id }}">{{ $worker->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="assign_date">アサイン日</label>
+                        <select class="form-control" id="assign_date" name="assign_date" required>
+                            <option value="">日付を選択してください</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="start_time">開始時間</label>
+                        <input type="time" class="form-control" id="start_time" name="start_time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end_time">終了時間</label>
+                        <input type="time" class="form-control" id="end_time" name="end_time" required>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
+                <button type="button" class="btn btn-primary" id="saveAssign">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 @section('css')
@@ -135,6 +229,46 @@ $(function () {
 
     $('#month').on('change', function() {
         $(this).closest('form').submit();
+    });
+    $('.assign-worker').on('click', function() {
+        var workplaceId = $(this).data('workplace-id');
+        var workplaceName = $(this).data('workplace-name');
+        $('#workplace_id').val(workplaceId);
+        $('#assignWorkerModalLabel').text(workplaceName + ' - 職人をアサイン');
+    });
+    $('.assign-worker').on('click', function() {
+        var workplaceId = $(this).data('workplace-id');
+        var workplaceName = $(this).data('workplace-name');
+        var unassignedDates = $(this).data('unassigned-dates');
+        $('#workplace_id').val(workplaceId);
+        $('#assignWorkerModalLabel').text(workplaceName + ' - 職人をアサイン');
+
+        // 未アサイン日のオプションを追加
+        var $assignDateSelect = $('#assign_date');
+        $assignDateSelect.empty().append('<option value="">日付を選択してください</option>');
+        unassignedDates.forEach(function(date) {
+            var formattedDate = moment(date).format('YYYY-MM-DD');
+            var displayDate = moment(date).format('YYYY/MM/DD');
+            $assignDateSelect.append('<option value="' + formattedDate + '">' + displayDate + '</option>');
+        });
+    });
+    $('#saveAssign').on('click', function() {
+        $.ajax({
+            url: '{{ route("saler.assignments.store-from-calendar") }}',
+            method: 'POST',
+            data: $('#assignWorkerForm').serialize(),
+            success: function(response) {
+                if(response.success) {
+                    alert('アサインが成功しました');
+                    location.reload();
+                } else {
+                    alert('アサインに失敗しました: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('エラーが発生しました');
+            }
+        });
     });
 });
 </script>

@@ -102,8 +102,9 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
     Route::get('assignments/details', [AssignmentViewController::class, 'getAssignmentDetails'])
         ->name('saler.assignments.details');
     // 現場別アサイン状況ビューのルート
-    Route::get('/saler/assignments/sites', [SiteAssignmentViewController::class, 'siteView'])
+    Route::get('assignments/sites', [SiteAssignmentViewController::class, 'siteView'])
         ->name('saler.assignments.sites');
+    Route::post('assignments/store-from-calendar', [WorkplaceController::class, 'storeAssignFromCalendar'])->name('saler.assignments.store-from-calendar');
 });
 
 // 施工業者用のルート
