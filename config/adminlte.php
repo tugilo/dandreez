@@ -449,7 +449,7 @@ return [
         ],
         [
             'text' => '現場別アサイン状況',
-            'url'  => 'saler/saler/assignments/sites',
+            'url'  => 'saler/assignments/sites',
             'icon' => 'fas fa-fw fa-building',
             'can'  => 'access-saler'
         ],

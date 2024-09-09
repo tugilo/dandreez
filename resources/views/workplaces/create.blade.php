@@ -67,37 +67,26 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="construction_start">施工開始日</label>
+                        <label for="construction_period">施工期間 <span class="badge bg-danger">必須</span></label>
                         <div class="input-group">
-                            <input type="text" name="construction_start" id="construction_start" class="form-control datepicker @error('construction_start') is-invalid @enderror" value="{{ old('construction_start') }}" readonly>
+                            <input type="text" name="construction_period" id="construction_period" class="form-control @error('construction_period') is-invalid @enderror" value="{{ old('construction_period') }}" required readonly>
                             <div class="input-group-append">
                                 <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                             </div>
                         </div>
-                        @error('construction_start')
+                        @error('construction_period')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
                             </span>
                         @enderror
                     </div>
+
+                    <!-- 隠しフィールドを追加 -->
+                    <input type="hidden" name="construction_start" id="construction_start" value="{{ old('construction_start') }}">
+                    <input type="hidden" name="construction_end" id="construction_end" value="{{ old('construction_end') }}">
                     
                     <div class="form-group">
-                        <label for="construction_end">施工終了日</label>
-                        <div class="input-group">
-                            <input type="text" name="construction_end" id="construction_end" class="form-control datepicker @error('construction_end') is-invalid @enderror" value="{{ old('construction_end') }}" readonly>
-                            <div class="input-group-append">
-                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                            </div>
-                        </div>
-                        @error('construction_end')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                        @enderror
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="floor_space">延べ床面積</label>
+                        <label for="floor_space">延べ壁面積</label>
                         <div class="input-group">
                             <input type="text" name="floor_space" id="floor_space" class="form-control @error('floor_space') is-invalid @enderror" value="{{ old('floor_space') }}">
                             <div class="input-group-append">
@@ -212,7 +201,7 @@
 @section('css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <style>
         .datepicker {
             padding: 0.375rem 0.75rem;
@@ -237,32 +226,49 @@
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.ja.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/moment/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script src="{{ asset('js/address-search.js') }}"></script>
     <script>
         $(document).ready(function() {
-            $('.select2').select2({
-                theme: 'bootstrap4',
+            $('#construction_period').daterangepicker({
+                locale: {
+                    format: 'YYYY-MM-DD',
+                    separator: ' ~ ',
+                    applyLabel: '適用',
+                    cancelLabel: 'キャンセル',
+                    fromLabel: '開始日',
+                    toLabel: '終了日',
+                    customRangeLabel: 'カスタム',
+                    weekLabel: 'W',
+                    daysOfWeek: ['日', '月', '火', '水', '木', '金', '土'],
+                    monthNames: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    firstDay: 1
+                },
+                showDropdowns: true,
+                minYear: parseInt(moment().format('YYYY'),10),
+                maxYear: parseInt(moment().add(10, 'year').format('YYYY'),10),
+                opens: 'center',
+                drops: 'auto'
+            }, function(start, end, label) {
+                // 日付が選択されたときに隠しフィールドを更新
+                $('#construction_start').val(start.format('YYYY-MM-DD'));
+                $('#construction_end').val(end.format('YYYY-MM-DD'));
             });
 
-            $('.datepicker').datepicker({
-                format: 'yyyy-mm-dd',
-                autoclose: true,
-                language: 'ja',
-                todayHighlight: true,
-                orientation: "bottom auto",
-                templates: {
-                    leftArrow: '<i class="fas fa-chevron-left"></i>',
-                    rightArrow: '<i class="fas fa-chevron-right"></i>'
-                }
-            }).on('show', function(e) {
-                $('.datepicker-dropdown').addClass('shadow-sm');
-            });
-
-            // カレンダーアイコンクリックでDatepickerを表示
+            // カレンダーアイコンクリックでDateRangePickerを表示
             $('.input-group-text').click(function() {
-                $(this).prev('.datepicker').datepicker('show');
+                $('#construction_period').data('daterangepicker').toggle();
+            });
+
+            // フォーム送信時に日付が選択されているか確認
+            $('form').submit(function(e) {
+                var startDate = $('#construction_start').val();
+                var endDate = $('#construction_end').val();
+                if (!startDate || !endDate) {
+                    e.preventDefault();
+                    alert('施工期間を選択してください。');
+                }
             });
 
             // 住所検索機能の初期化
