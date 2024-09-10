@@ -166,8 +166,7 @@ class ApiController extends Controller
     public function assignWorker(Request $request)
     {
         Log::info('職人アサインリクエストを受信', $request->all());
-
-        // リクエストデータのバリデーション
+    
         $validator = Validator::make($request->all(), [
             'worker_id' => 'required|exists:workers,id',
             'assign_date' => 'required|date',
@@ -176,68 +175,70 @@ class ApiController extends Controller
             'assignments.*.start_time' => 'required|date_format:H:i',
             'assignments.*.end_time' => 'required|date_format:H:i|after:assignments.*.start_time',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
-
+    
         DB::beginTransaction();
-
+    
         try {
             $worker = Worker::findOrFail($request->worker_id);
             $assignDate = Carbon::parse($request->assign_date);
-
+    
             // 既存のアサインを取得し、show_flgを0に設定
             Assign::where('worker_id', $worker->id)
                   ->whereDate('start_date', $assignDate)
                   ->update(['show_flg' => 0]);
-
-            // 新しいアサインを作成
+    
             foreach ($request->assignments as $assignment) {
                 $workplace = Workplace::findOrFail($assignment['workplace_id']);
-
-                Assign::create([
-                    'workplace_id' => $workplace->id,
-                    'worker_id' => $worker->id,
-                    'start_date' => $assignDate,
-                    'end_date' => $assignDate,
-                    'start_time' => $assignment['start_time'],
-                    'end_time' => $assignment['end_time'],
-                    'saler_id' => $workplace->saler_id,
-                    'saler_staff_id' => $workplace->saler_staff_id,
-                    'construction_company_id' => $worker->construction_company_id,
-                    'show_flg' => 1,
-                ]);
+    
+                Assign::updateOrCreate(
+                    [
+                        'worker_id' => $worker->id,
+                        'workplace_id' => $workplace->id,
+                        'start_date' => $assignDate,
+                    ],
+                    [
+                        'end_date' => $assignDate,
+                        'start_time' => $assignment['start_time'],
+                        'end_time' => $assignment['end_time'],
+                        'saler_id' => $workplace->saler_id,
+                        'saler_staff_id' => $workplace->saler_staff_id,
+                        'construction_company_id' => $worker->construction_company_id,
+                        'show_flg' => 1,
+                    ]
+                );
             }
-
+    
             DB::commit();
-
-            Log::info('職人アサインが正常に作成されました', [
+    
+            Log::info('職人アサインが正常に作成/更新されました', [
                 'worker_id' => $worker->id,
                 'assign_date' => $assignDate,
                 'assignment_count' => count($request->assignments),
             ]);
-
+    
             return response()->json([
                 'success' => true,
-                'message' => 'アサインが正常に作成されました。',
+                'message' => 'アサインが正常に作成/更新されました。',
             ]);
-
+    
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('職人アサイン作成中にエラーが発生しました', [
+            Log::error('職人アサイン作成/更新中にエラーが発生しました', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
+    
             return response()->json([
                 'success' => false,
-                'message' => 'アサインの作成に失敗しました。',
+                'message' => 'アサインの作成/更新に失敗しました。',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
-
     /**
      * 既存のアサインを取得する
      *
@@ -247,48 +248,60 @@ class ApiController extends Controller
     public function getExistingAssigns(Request $request)
     {
         Log::info('既存アサイン取得リクエストを受信', $request->all());
-
+    
         $validator = Validator::make($request->all(), [
-            'worker_id' => 'required|exists:workers,id',
+            'workplace_id' => 'required_without:worker_id|exists:workplaces,id',
+            'workplace_id' => 'required|exists:workplaces,id',
             'assign_date' => 'required|date',
         ]);
+        $workplaceId = $request->input('workplace_id');
+        $assignDate = $request->input('assign_date');
 
+        
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
-
+    
         try {
-            $assigns = Assign::where('worker_id', $request->worker_id)
-                             ->whereDate('start_date', $request->assign_date)
-                             ->where('show_flg', 1)
-                             ->with('workplace')
+            $query = Assign::where('show_flg', 1)
+                           ->whereDate('start_date', $request->assign_date);
+    
+            if ($request->has('workplace_id')) {
+                $query->where('workplace_id', $request->workplace_id);
+            }
+    
+            if ($request->has('worker_id')) {
+                $query->where('worker_id', $request->worker_id);
+            }
+    
+            $assigns = $query->with(['worker', 'workplace'])
                              ->get()
                              ->map(function ($assign) {
                                  return [
+                                     'worker_id' => $assign->worker_id,
+                                     'worker_name' => $assign->worker->name,
                                      'workplace_id' => $assign->workplace_id,
                                      'workplace_name' => $assign->workplace->name,
                                      'start_time' => $assign->start_time->format('H:i'),
                                      'end_time' => $assign->end_time->format('H:i'),
                                  ];
                              });
-
+    
             Log::info('既存アサインを取得しました', [
-                'worker_id' => $request->worker_id,
-                'assign_date' => $request->assign_date,
                 'assign_count' => $assigns->count(),
             ]);
-
+    
             return response()->json([
                 'success' => true,
                 'assigns' => $assigns,
             ]);
-
+    
         } catch (\Exception $e) {
             Log::error('既存アサイン取得中にエラーが発生しました', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
+    
             return response()->json([
                 'success' => false,
                 'message' => '既存アサインの取得に失敗しました。',
@@ -296,6 +309,7 @@ class ApiController extends Controller
             ], 500);
         }
     }
+    
     /**
      * 月別のアサイン状況を取得する
      *
@@ -304,45 +318,137 @@ class ApiController extends Controller
      */
     public function getMonthlyAssignments(Request $request)
     {
-        $month = $request->input('month', Carbon::now()->format('Y-m'));
-        $startDate = Carbon::parse($month)->startOfMonth();
-        $endDate = Carbon::parse($month)->endOfMonth();
-
-        $workplaces = Workplace::with(['assigns' => function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('start_date', [$startDate, $endDate])
+        $start = $request->input('start');
+        $end = $request->input('end');
+    
+        $workplaces = Workplace::with(['assigns' => function ($query) use ($start, $end) {
+            $query->whereBetween('start_date', [$start, $end])
                   ->where('show_flg', 1)
                   ->with('worker');
         }])
         ->where('show_flg', 1)
-        ->where(function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('construction_start', [$startDate, $endDate])
-                ->orWhereBetween('construction_end', [$startDate, $endDate])
-                ->orWhere(function ($q) use ($startDate, $endDate) {
-                    $q->where('construction_start', '<=', $startDate)
-                      ->where('construction_end', '>=', $endDate);
-                });
-        })
         ->get();
-
+    
         $assignments = [];
         foreach ($workplaces as $workplace) {
             $assignments[$workplace->id] = [
                 'name' => $workplace->name,
                 'construction_start' => $workplace->construction_start->format('Y-m-d'),
                 'construction_end' => $workplace->construction_end->format('Y-m-d'),
-                'assigns' => []
+                'assigns' => $workplace->assigns->map(function ($assign) {
+                    return [
+                        'date' => $assign->start_date->format('Y-m-d'),
+                        'worker_name' => $assign->worker->name,
+                        'worker_id' => $assign->worker->id,
+                        'start_time' => $assign->start_time ? $assign->start_time->format('H:i') : null,
+                        'end_time' => $assign->end_time ? $assign->end_time->format('H:i') : null,
+                    ];
+                })
             ];
-
-            foreach ($workplace->assigns as $assign) {
-                $assignments[$workplace->id]['assigns'][] = [
-                    'date' => $assign->start_date->format('Y-m-d'),
-                    'worker_name' => $assign->worker->name,
-                    'start_time' => $assign->start_time->format('H:i'),
-                    'end_time' => $assign->end_time->format('H:i')
-                ];
+        }
+    
+        return response()->json($assignments);
+    }
+    
+    
+    public function cancelAssignment(Request $request)
+    {
+        // バリデーション
+        $validator = Validator::make($request->all(), [
+            'workplace_id' => 'required|exists:workplaces,id',
+            'assign_date' => 'required|date',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+    
+        try {
+            $canceled = Assign::where('workplace_id', $request->workplace_id)
+                ->whereDate('start_date', $request->assign_date)
+                ->update(['show_flg' => 0]);
+    
+            if ($canceled) {
+                return response()->json(['success' => true, 'message' => 'アサインが解除されました。']);
+            } else {
+                return response()->json(['success' => false, 'message' => '該当するアサインが見つかりませんでした。'], 404);
             }
+        } catch (\Exception $e) {
+            Log::error('アサイン解除中にエラーが発生しました', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'アサインの解除に失敗しました。'], 500);
+        }
+    }
+    /**
+     * 職人の月別アサインメントを取得する
+     *
+     * @param Request $request
+     * @param int $workerId 職人ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getWorkerAssignments(Request $request)
+    {
+        $start = Carbon::parse($request->input('start'));
+        $end = Carbon::parse($request->input('end'));
+
+        $workers = Worker::with(['assigns' => function ($query) use ($start, $end) {
+            $query->whereBetween('start_date', [$start, $end])
+                  ->where('show_flg', 1)
+                  ->with('workplace');
+        }])->get();
+
+        $assignments = [];
+        foreach ($workers as $worker) {
+            $assignments[$worker->id] = [
+                'name' => $worker->name,
+                'assigns' => $worker->assigns->map(function ($assign) {
+                    return [
+                        'date' => $assign->start_date->format('Y-m-d'),
+                        'workplace_name' => $assign->workplace->name,
+                        'start_time' => $assign->start_time ? $assign->start_time->format('H:i') : null,
+                        'end_time' => $assign->end_time ? $assign->end_time->format('H:i') : null,
+                    ];
+                })
+            ];
         }
 
         return response()->json($assignments);
     }
+    public function getWorkplacesForWorker($workerId, Request $request)
+    {
+        $date = Carbon::parse($request->input('date'));
+        $worker = Worker::findOrFail($workerId);
+    
+        $workplaces = Workplace::where('construction_start', '<=', $date)
+            ->where('construction_end', '>=', $date)
+            ->where('show_flg', 1)
+            ->get();
+    
+        return response()->json($workplaces);
+    }
+    public function cancelWorkerAssignment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'worker_id' => 'required|exists:workers,id',
+            'assign_date' => 'required|date',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+    
+        try {
+            $canceled = Assign::where('worker_id', $request->worker_id)
+                ->whereDate('start_date', $request->assign_date)
+                ->update(['show_flg' => 0]);
+    
+            if ($canceled) {
+                return response()->json(['success' => true, 'message' => '職人のアサインが解除されました。']);
+            } else {
+                return response()->json(['success' => false, 'message' => '該当するアサインが見つかりませんでした。'], 404);
+            }
+        } catch (\Exception $e) {
+            Log::error('職人のアサイン解除中にエラーが発生しました', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => '職人のアサイン解除に失敗しました。'], 500);
+        }
+    }    
 }

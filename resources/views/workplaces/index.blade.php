@@ -137,54 +137,83 @@
     
     <!-- アサインモーダル -->
     <div class="modal fade" id="assignModal-{{ $workplace->id }}" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">施工依頼アサイン</h5>
+                    <h5 class="modal-title">職人のアサイン</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="assignForm-{{ $workplace->id }}" action="{{ route($role . '.workplaces.assign.store', ['role' => $role, 'id' => $workplace->id]) }}" method="POST">
+                    <div class="card mb-3">
+                        <div class="card-header" id="instructionsHeader">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#instructionsCollapse" aria-expanded="false" aria-controls="instructionsCollapse">
+                                    使用手順
+                                </button>
+                            </h5>
+                        </div>
+                        <div id="instructionsCollapse" class="collapse" aria-labelledby="instructionsHeader">
+                            <div class="card-body">
+                                <ol>
+                                    <li>カレンダーから日付を選択</li>
+                                    <li>アサインする職人を選択</li>
+                                    <li>各職人の作業時間を設定</li>
+                                    <li>「アサイン」ボタンをクリック</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <h4 id="modalWorkplaceName-{{ $workplace->id }}" class="font-weight-bold text-primary mb-2">{{ $workplace->name }}</h4>
+                        <h5 id="modalAssignDates-{{ $workplace->id }}" class="text-secondary">
+                            {{ $workplace->construction_start->format('Y/m/d') }} ～ {{ $workplace->construction_end->format('Y/m/d') }}
+                        </h5>
+                    </div>
+                    <form id="assignForm-{{ $workplace->id }}">
                         @csrf
                         <input type="hidden" name="workplace_id" value="{{ $workplace->id }}">
-                        <!-- 職人選択フォーム -->
+                        
                         <div class="form-group">
-                            <label for="worker_{{ $workplace->id }}">職人選択</label>
-                            <select class="form-control worker-select" id="worker_{{ $workplace->id }}" name="worker_id" data-workplace-id="{{ $workplace->id }}">
-                                <option value="">選択してください</option>
+                            <label class="font-weight-bold">日付選択</label>
+                            <div id="assign-calendar-{{ $workplace->id }}" class="assign-calendar mb-3"></div>
+                            <div>
+                                <button type="button" class="btn btn-primary btn-sm mr-2" onclick="selectAllDates({{ $workplace->id }})">全て選択</button>
+                                <button type="button" class="btn btn-primary btn-sm mr-2" onclick="selectWeekdayDates({{ $workplace->id }})">平日のみ選択</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="clearAllDates({{ $workplace->id }})">全解除</button>
+                            </div>
+                            <div id="selected-dates-{{ $workplace->id }}" class="mt-2"></div>
+                        </div>
+
+                        <div class="calendar-legend">
+                            <span><i class="fas fa-exclamation-triangle text-danger"></i> 未アサイン</span>
+                            <span><i class="fas fa-check text-success"></i> アサイン済み</span>
+                            <span><i class="fas fa-square text-primary"></i> 選択中</span>
+                        </div>
+                    
+                        <div class="form-group mt-4">
+                            <label class="font-weight-bold">職人選択 <small class="text-muted">(1人以上選択してください)</small></label>
+                            <select id="workerSelect-{{ $workplace->id }}" class="form-control" multiple>
                                 @foreach($workers as $worker)
                                     <option value="{{ $worker->id }}">{{ $worker->name }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <!-- 開始時間入力フォーム -->
-                        <div class="form-group">
-                            <label for="start_time_{{ $workplace->id }}">開始時間</label>
-                            <input type="time" class="form-control" id="start_time_{{ $workplace->id }}" name="start_time">
+                        <div id="workerTimesContainer-{{ $workplace->id }}">
+                            <!-- 職人ごとの時間設定欄はJavaScriptで動的に追加 -->
                         </div>
-                        <!-- 終了時間入力フォーム -->
-                        <div class="form-group">
-                            <label for="end_time_{{ $workplace->id }}">終了時間</label>
-                            <input type="time" class="form-control" id="end_time_{{ $workplace->id }}" name="end_time">
-                        </div>
-                        <!-- カレンダー表示エリア -->
-                        <div class="calendar-container">
-                            <div id="calendar-{{ $workplace->id }}" class="workplace-calendar"></div>
-                        </div>
-                        <!-- 選択された日付を格納する隠しフィールド -->
-                        <input type="hidden" name="selected_dates" id="selectedDates-{{ $workplace->id }}">
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
-                    <button type="submit" form="assignForm-{{ $workplace->id }}" class="btn btn-primary" id="assignButton-{{ $workplace->id }}">アサインする</button>
+                    <button type="button" class="btn btn-custom" id="assignButton-{{ $workplace->id }}" onclick="submitAssign({{ $workplace->id }})">アサイン</button>
                 </div>
             </div>
         </div>
     </div>
-    @endif
+@endif
 
     <!-- 削除確認モーダル -->
     <div class="modal fade" id="deleteModal-{{ $workplace->id }}" tabindex="-1" role="dialog" aria-hidden="true">
@@ -216,8 +245,9 @@
 @stop
 
 @section('css')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css"/>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     /* ボタングループのスタイル */
     .btn-group .btn {
@@ -226,15 +256,6 @@
     /* バッジのスタイル */
     .badge {
         font-size: 100%;
-    }
-    /* カレンダーコンテナのスタイル */
-    .calendar-container {
-        height: 500px;
-        margin-bottom: 20px;
-    }
-    /* カレンダーのスタイル */
-    .workplace-calendar {
-        height: 100%;
     }
     /* モーダルダイアログのスクロール設定 */
     .modal-dialog-scrollable {
@@ -247,28 +268,391 @@
     .modal-body {
         overflow-y: auto;
     }
-    .construction-period-label {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        text-align: center;
-        color: #ff0000;
-        font-size: 0.8em;
-        padding: 2px;
-        pointer-events: none;
+    /* 職人選択フィールドのスタイル */
+    .select2-container {
+        width: 100% !important;
     }
-
+    .select2-selection--multiple {
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #007bff;
+        border: 1px solid #006fe6;
+        color: #fff;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: #fff;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: #fff;
+        background-color: #0056b3;
+    }
+    /* 時間入力フィールドのスタイル */
+    .worker-time-fields {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    .worker-time-fields h6 {
+        margin-bottom: 10px;
+    }
+    .assign-calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 5px;
+    }
+    .calendar-cell {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        padding: 5px;
+        text-align: center;
+        cursor: pointer;
+    }
+    .calendar-cell.weekend {
+        background-color: #e6f3ff;
+    }
+    .calendar-cell.selected {
+        background-color: #007bff;
+        color: white;
+    }
+    .calendar-cell.selected i {
+        color: white !important;
+    }
+    .calendar-legend {
+        margin-top: 10px;
+        font-size: 0.9em;
+    }
+    .calendar-legend span {
+        margin-right: 15px;
+    }
+    .worker-selection {
+        background-color: #f0f0f0;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 20px;
+    }
+    .btn-custom {
+        background-color: #28a745;
+        color: white;
+        transition: all 0.3s;
+    }
+    .btn-custom:hover {
+        background-color: #218838;
+        color: white;
+    }
+    .instructions {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .calendar-cell.unassigned i {
+        color: #dc3545; /* 赤色 */
+    }
+    .calendar-cell.assigned i {
+        color: #28a745; /* 緑色 */
+    }
+    .calendar-cell.selected i {
+        color: white;
+    }
 </style>
 @stop
 
 @section('js')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.ja.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/locale/ja.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+    // グローバル関数の定義
+    let isSubmitting = false;
+    function openAssignModal(workplaceId) {
+        var modal = $(`#assignModal-${workplaceId}`);
+        modal.modal('show');
+    
+        // カレンダーの初期化
+        var startDate = moment($(`#modalAssignDates-${workplaceId}`).text().split('～')[0].trim(), 'YYYY/MM/DD').toDate();
+        var endDate = moment($(`#modalAssignDates-${workplaceId}`).text().split('～')[1].trim(), 'YYYY/MM/DD').toDate();
+        initAssignCalendar(workplaceId, startDate, endDate);
+    
+        // 既存のアサイン情報を取得
+        getExistingAssigns(workplaceId);
+    }
+    
+    function initAssignCalendar(workplaceId, startDate, endDate) {
+        const calendarEl = $(`#assign-calendar-${workplaceId}`);
+        calendarEl.empty();
+
+        const currentDate = moment(startDate);
+        const endMoment = moment(endDate);
+
+        const days = ['日', '月', '火', '水', '木', '金', '土'];
+
+        while (currentDate <= endMoment) {
+            const dayOfWeek = days[currentDate.day()];
+            const date = currentDate.format('YYYY-MM-DD');
+            
+            const dateCell = $(`
+                <div class="calendar-cell unassigned" data-date="${date}">
+                    <div>${currentDate.format('MM/DD')}</div>
+                    <div>(${dayOfWeek})</div>
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            `);
+
+            dateCell.on('click', function() {
+                $(this).toggleClass('selected');
+                if ($(this).hasClass('selected')) {
+                    $(this).find('i').removeClass('fa-exclamation-triangle').addClass('fa-check');
+                } else {
+                    $(this).find('i').removeClass('fa-check').addClass('fa-exclamation-triangle');
+                }
+                updateSelectedDates(workplaceId);
+            });
+
+            calendarEl.append(dateCell);
+            currentDate.add(1, 'days');
+        }
+
+        updateExistingAssigns(workplaceId);
+}
+    function updateExistingAssigns(workplaceId) {
+        $.ajax({
+            url: '{{ route("workplaces.get-existing-assigns") }}',
+            method: 'GET',
+            data: { workplace_id: workplaceId },
+            success: function(response) {
+                if (response.success) {
+                    response.assigns.forEach(function(assign) {
+                        const cell = $(`#assign-calendar-${workplaceId} .calendar-cell[data-date="${assign.date}"]`);
+                        cell.removeClass('unassigned').addClass('assigned');
+                        cell.find('i').removeClass('fa-exclamation-triangle').addClass('fa-check');
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching existing assigns:', error);
+            }
+        });
+    }
+
+    function updateSelectedDates(workplaceId) {
+        const selectedDates = $(`#assign-calendar-${workplaceId} .calendar-cell.selected`).map(function() {
+            return $(this).data('date');
+        }).get();
+
+        const container = $(`#selected-dates-${workplaceId}`);
+        container.empty();
+        selectedDates.forEach(date => {
+            container.append(`
+                <span class="badge badge-primary mr-1 mb-1">
+                    ${date}
+                    <i class="fas fa-times ml-1" onclick="removeDate('${workplaceId}', '${date}')"></i>
+                </span>
+            `);
+        });
+
+        // カレンダーのアイコンを更新
+        $(`#assign-calendar-${workplaceId} .calendar-cell`).each(function() {
+            const cellDate = $(this).data('date');
+            const isSelected = selectedDates.includes(cellDate);
+            const isAssigned = $(this).hasClass('assigned');
+
+            $(this).removeClass('selected unassigned assigned');
+            $(this).find('i').removeClass('fa-check fa-exclamation-triangle').addClass(isAssigned ? 'fa-check' : 'fa-exclamation-triangle');
+
+            if (isSelected) {
+                $(this).addClass('selected');
+                $(this).find('i').removeClass('fa-exclamation-triangle').addClass('fa-check');
+            } else if (!isAssigned) {
+                $(this).addClass('unassigned');
+            }
+        });
+    }
+
+
+    function removeDate(workplaceId, date) {
+        const cell = $(`#assign-calendar-${workplaceId} .calendar-cell[data-date="${date}"]`);
+        cell.removeClass('selected');
+        if (!cell.hasClass('assigned')) {
+            cell.addClass('unassigned');
+            cell.find('i').removeClass('fa-check').addClass('fa-exclamation-triangle');
+        }
+        updateSelectedDates(workplaceId);
+    }
+
+    function selectAllDates(workplaceId) {
+        $(`#assign-calendar-${workplaceId} .calendar-cell`).addClass('selected');
+        $(`#assign-calendar-${workplaceId} .calendar-cell i`).removeClass('fa-exclamation-triangle').addClass('fa-check');
+        updateSelectedDates(workplaceId);
+    }    
+
+    function clearAllDates(workplaceId) {
+        $(`#assign-calendar-${workplaceId} .calendar-cell`).removeClass('selected');
+        $(`#assign-calendar-${workplaceId} .calendar-cell i`).removeClass('fa-check').addClass('fa-exclamation-triangle');
+        updateSelectedDates(workplaceId);
+    }
+    function selectWeekdayDates(workplaceId) {
+        $(`#assign-calendar-${workplaceId} .calendar-cell`).removeClass('selected');
+        $(`#assign-calendar-${workplaceId} .calendar-cell i`).removeClass('fa-check').addClass('fa-exclamation-triangle');
+        $(`#assign-calendar-${workplaceId} .calendar-cell`).each(function() {
+            const date = moment($(this).data('date'));
+            if (date.day() !== 0 && date.day() !== 6) {
+                $(this).addClass('selected');
+                $(this).find('i').removeClass('fa-exclamation-triangle').addClass('fa-check');
+            }
+        });
+        updateSelectedDates(workplaceId);
+    }
+    function addWorkerTimeFields(workplaceId, workerId, workerName) {
+        var container = $(`#workerTimesContainer-${workplaceId}`);
+        var html = `
+            <div class="worker-time-fields mb-3">
+                <h6>${workerName}</h6>
+                <div class="form-row">
+                    <div class="col">
+                        <label>開始時間</label>
+                        <input type="time" class="form-control" name="workers[${workerId}][start_time]" value="09:00" required>
+                    </div>
+                    <div class="col">
+                        <label>終了時間</label>
+                        <input type="time" class="form-control" name="workers[${workerId}][end_time]" value="17:00" required>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.append(html);
+    }
+    
+    function getExistingAssigns(workplaceId) {
+        $.ajax({
+            url: '{{ route("workplaces.get-existing-assigns") }}',
+            method: 'GET',
+            data: {
+                workplace_id: workplaceId
+            },
+            success: function(response) {
+                if (response.success) {
+                    var select = $(`#workerSelect-${workplaceId}`);
+                    select.val(null).trigger('change');
+                    var selectedWorkers = [];
+    
+                    response.assigns.forEach(function(assign) {
+                        selectedWorkers.push(assign.worker_id.toString());
+                        addWorkerTimeFields(workplaceId, assign.worker_id, $(`#workerSelect-${workplaceId} option[value="${assign.worker_id}"]`).text());
+                        $(`#workerTimesContainer-${workplaceId} input[name="workers[${assign.worker_id}][start_time]"]`).val(assign.start_time);
+                        $(`#workerTimesContainer-${workplaceId} input[name="workers[${assign.worker_id}][end_time]"]`).val(assign.end_time);
+                    });
+    
+                    select.val(selectedWorkers).trigger('change');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching existing assigns:', error);
+            }
+        });
+    }
+    
+    function submitAssign(workplaceId) {
+        // ダブルサブミット防止
+        if (isSubmitting) {
+            console.log('既に送信処理中です');
+            return;
+        }
+        isSubmitting = true;
+
+        var form = $(`#assignForm-${workplaceId}`);
+        var formData = new FormData(form[0]);
+        
+        // 選択された日付を追加
+        var selectedDates = $(`#assign-calendar-${workplaceId} .calendar-cell.selected`).map(function() {
+            return $(this).data('date');
+        }).get();
+        formData.append('selected_dates', JSON.stringify(selectedDates));
+
+        // 選択された職人とその時間情報を追加
+        var workers = [];
+        $(`#workerTimesContainer-${workplaceId} .worker-time-fields`).each(function() {
+            var workerId = $(this).find('input[name^="workers"]').attr('name').match(/\d+/)[0];
+            var startTime = $(this).find('input[name$="[start_time]"]').val();
+            var endTime = $(this).find('input[name$="[end_time]"]').val();
+            workers.push({
+                worker_id: workerId,
+                start_time: startTime,
+                end_time: endTime
+            });
+        });
+        formData.append('workers', JSON.stringify(workers));
+
+        $.ajax({
+            url: '{{ route("saler.workplaces.assign.store", ["id" => "__id__"]) }}'.replace('__id__', workplaceId),
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                isSubmitting = false;  // リセット
+                if(response.success) {
+                    alert('アサインが成功しました');
+                    $(`#assignModal-${workplaceId}`).modal('hide');
+                    location.reload();
+                } else {
+                    alert('アサインに失敗しました: ' + (response.message || '不明なエラー'));
+                }
+            },
+            error: function(xhr) {
+                isSubmitting = false;  // リセット
+                var errorMessage = '不明なエラーが発生しました';
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMessage = Object.values(xhr.responseJSON.errors).flat().join("\n");
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                alert('エラー: ' + errorMessage);
+            }
+        });
+    }
+
+    function openApproveModal(workplaceId) {
+        $(`#approveModal-${workplaceId}`).modal('show');
+    }
+    
+    function openDeleteModal(workplaceId) {
+        $(`#deleteModal-${workplaceId}`).modal('show');
+    }
+    
+    function checkOverlap(workplaceId, workerId, startDate, endDate, startTime, endTime) {
+        return new Promise(function(resolve, reject) {
+            $.ajax({
+                url: '{{ route("workplaces.check-overlap") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    workplace_id: workplaceId,
+                    worker_id: workerId,
+                    start_date: startDate,
+                    end_date: endDate,
+                    start_time: startTime,
+                    end_time: endTime
+                },
+                success: function(response) {
+                    resolve(response);
+                },
+                error: function(xhr, status, error) {
+                    reject(error);
+                }
+            });
+        });
+    }
+    
     $(document).ready(function() {
         // DataTablesの初期化
         $('#workplaces-table').DataTable({
@@ -284,238 +668,30 @@
         // ツールチップの初期化
         $('[data-toggle="tooltip"]').tooltip();
     
-        // 各カレンダーの初期化
-        $('.workplace-calendar').each(function() {
-            var workplaceId = $(this).attr('id').split('-')[1];
-            var workplace = @json($workplaces).find(w => w.id == workplaceId);
-            var calendar = $(this);
-            var assigns = @json($assigns)[workplaceId] || [];
-
-            calendar.fullCalendar({
-                locale: 'ja',
-                defaultView: 'month',
-                selectable: true,
-                unselectAuto: false,
-                timeZone: 'local', // ローカルタイムゾーンを使用
-                events: [
-                    // 施工期間を背景色で表示
-                    {
-                        start: moment(workplace.construction_start).startOf('day'),
-                        end: moment(workplace.construction_end).endOf('day'),
-                        rendering: 'background',
-                        color: '#ffcccc'
-                    },
-                    // 施工期間のラベルを表示（各日に表示）
-                    {
-                        start: moment(workplace.construction_start).startOf('day'),
-                        end: moment(workplace.construction_end).endOf('day'),
-                        title: '施工期間',
-                        allDay: true,
-                        textColor: '#ff0000',
-                        backgroundColor: 'transparent',
-                        borderColor: 'transparent',
-                        rendering: 'background',
-                        overlap: false
-                    },
-                    // 既存のアサインを表示
-                    ...assigns.map(assign => ({
-                        title: assign.worker.name,
-                        start: moment(assign.start_date).format('YYYY-MM-DD') + 'T' + assign.start_time,
-                        end: moment(assign.start_date).format('YYYY-MM-DD') + 'T' + assign.end_time,
-                        color: '#3788d8'
-                    }))
-                ],
-                // 施工期間外の選択を制限
-                selectConstraint: {
-                    start: moment(workplace.construction_start).startOf('day'),
-                    end: moment(workplace.construction_end).endOf('day').add(1, 'day')
-                },
-                select: function(start, end) {
-                    handleDateSelection(start, end, workplaceId);
-                },
-                eventClick: function(calEvent, jsEvent, view) {
-                    handleEventClick(calEvent, jsEvent, view, workplaceId);
-                },
-                eventRender: function(event, element) {
-                    if (event.rendering !== 'background') {
-                        element.css('cursor', 'pointer');
-                        element.attr('title', event.title);
-                    }
-                }
-            });
-
-            // 既存のアサインを取得して表示
-            getExistingAssigns(workplaceId, null, calendar);
-        });
-
         // 職人選択時のイベントハンドラ
-        $('.worker-select').change(function() {
-            var workplaceId = $(this).data('workplace-id');
-            var workerId = $(this).val();
-            var calendar = $('#calendar-' + workplaceId);
-            
-            // カレンダーをリセット
-            calendar.fullCalendar('removeEvents', function(event) {
-                return event.type === 'assign';
+        $('.modal').on('change', '[id^=workerSelect-]', function() {
+            var workplaceId = $(this).attr('id').split('-')[1];
+            var selectedWorkers = $(this).val();
+            var container = $(`#workerTimesContainer-${workplaceId}`);
+            container.empty();
+    
+            selectedWorkers.forEach(function(workerId) {
+                var workerName = $(`#workerSelect-${workplaceId} option[value="${workerId}"]`).text();
+                addWorkerTimeFields(workplaceId, workerId, workerName);
             });
-            
-            // 選択した日付をリセット
-            $('#selectedDates-' + workplaceId).val('[]');
-            
-            if (workerId) {
-                updateCalendarEvents(workplaceId, workerId);
-            }
+        });
+    
+        // Select2の初期化
+        $('[id^=workerSelect-]').select2({
+            placeholder: "職人を選択してください",
+            allowClear: true
+        });
+    
+        // アサインボタンのクリックイベント
+        $(document).on('click', '[id^=assignButton-]', function() {
+            var workplaceId = $(this).attr('id').split('-')[1];
+            submitAssign(workplaceId);
         });
     });
-    
-    // カレンダーイベントを更新する関数
-    function updateCalendarEvents(workplaceId, workerId) {
-        var calendar = $('#calendar-' + workplaceId);
-        var workplace = @json($workplaces).find(w => w.id == workplaceId);
-        var assigns = @json($assigns)[workplaceId] || [];
-    
-        calendar.fullCalendar('removeEvents');
-        calendar.fullCalendar('addEventSource', [
-            {
-                start: workplace.construction_start,
-                end: workplace.construction_end,
-                rendering: 'background',
-                color: '#ffcccc'
-            }
-        ]);
-    
-        if (workerId) {
-            var workerAssigns = assigns.filter(a => a.worker_id == workerId);
-            calendar.fullCalendar('addEventSource', workerAssigns.map(assign => ({
-                title: '既存のアサイン',
-                start: assign.start_date,
-                end: assign.end_date,
-                color: '#3788d8'
-            })));
-        }
-    
-        var otherAssigns = assigns.filter(a => a.worker_id != workerId);
-        calendar.fullCalendar('addEventSource', otherAssigns.map(assign => ({
-            title: '他の職人のアサイン',
-            start: assign.start_date,
-            end: assign.end_date,
-            color: '#28a745'
-        })));
-    }
-    
-    // 日付選択時のハンドラ
-    function handleDateSelection(start, end, workplaceId) {
-        var workerId = $('#worker_' + workplaceId).val();
-        var startTime = $('#start_time_' + workplaceId).val();
-        var endTime = $('#end_time_' + workplaceId).val();
-        
-        if (!workerId) {
-            alert('職人を選択してください。');
-            $('#calendar-' + workplaceId).fullCalendar('unselect');
-            return;
-        }
-        
-        if (!startTime || !endTime) {
-            alert('開始時間と終了時間を設定してください。');
-            $('#calendar-' + workplaceId).fullCalendar('unselect');
-            return;
-        }
-        
-        // ここで重複チェックのAjax呼び出しを行う
-        $.ajax({
-            url: '{{ route("workplaces.check-overlap") }}',
-            method: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                worker_id: workerId,
-                start_date: start.format('YYYY-MM-DD'),
-                end_date: end.format('YYYY-MM-DD'),
-                start_time: startTime,
-                end_time: endTime,
-                workplace_id: workplaceId
-            },
-            success: function(response) {
-                if (response.overlap) {
-                    alert('選択された期間は他の現場とアサインが重複しています。');
-                    $('#calendar-' + workplaceId).fullCalendar('unselect');
-                } else {
-                    // イベントを追加
-                    $('#calendar-' + workplaceId).fullCalendar('renderEvent', {
-                        title: '職人アサイン',
-                        start: start.format('YYYY-MM-DD') + 'T' + startTime,
-                        end: start.format('YYYY-MM-DD') + 'T' + endTime,
-                        type: 'assign'
-                    }, true);
-                    
-                    // 選択した日付を保存
-                    var selectedDates = JSON.parse($('#selectedDates-' + workplaceId).val() || '[]');
-                    selectedDates.push({
-                        date: start.format('YYYY-MM-DD'),
-                        start_time: startTime,
-                        end_time: endTime
-                    });
-                    $('#selectedDates-' + workplaceId).val(JSON.stringify(selectedDates));
-                }
-            }
-        });
-    }    
-    // イベントクリック時のハンドラ
-    function handleEventClick(calEvent, jsEvent, view, workplaceId) {
-        if (calEvent.type === 'assign') {
-            if (confirm('このアサインを削除しますか？')) {
-                $('#calendar-' + workplaceId).fullCalendar('removeEvents', calEvent._id);
-                
-                // 選択した日付から削除
-                var selectedDates = JSON.parse($('#selectedDates-' + workplaceId).val() || '[]');
-                selectedDates = selectedDates.filter(function(date) {
-                    return date.date !== calEvent.start.format('YYYY-MM-DD');
-                });
-                $('#selectedDates-' + workplaceId).val(JSON.stringify(selectedDates));
-            }
-        }
-    }
-    
-    // アサインモーダルを開く関数
-    function openAssignModal(workplaceId) {
-        $('#assignModal-' + workplaceId).modal('show');
-    }
-    
-    // 承認モーダルを開く関数
-    function openApproveModal(workplaceId) {
-        $('#approveModal-' + workplaceId).modal('show');
-    }
-    
-    // 削除モーダルを開く関数
-    function openDeleteModal(workplaceId) {
-        $('#deleteModal-' + workplaceId).modal('show');
-    }
-    
-    // 既存のアサインを取得する関数
-    function getExistingAssigns(workplaceId, workerId, calendar) {
-        $.ajax({
-            url: '{{ route("workplaces.get-existing-assigns") }}',
-            method: 'GET',
-            data: {
-                workplace_id: workplaceId,
-                worker_id: workerId
-            },
-            success: function(response) {
-                if (response.success) {
-                    response.assigns.forEach(function(assign) {
-                        calendar.fullCalendar('renderEvent', {
-                            id: assign.id,
-                            title: '職人アサイン',
-                            start: assign.date + 'T' + assign.start_time,
-                            end: assign.date + 'T' + assign.end_time,
-                            type: 'assign'
-                        }, true);
-                    });
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Error fetching existing assigns:', error);
-            }
-        });
-    }
     </script>
 @stop

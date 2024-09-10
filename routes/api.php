@@ -39,8 +39,17 @@ Route::post('/assign-worker', [ApiController::class, 'assignWorker']);
 // 既存のアサイン取得ルート
 Route::get('/existing-assigns', [ApiController::class, 'getExistingAssigns']);
 
+Route::get('/worker-assignments', [ApiController::class, 'getWorkerAssignments']);
+
 // 月別アサイン状況を取得するルート
 Route::get('/monthly-assignments', [ApiController::class, 'getMonthlyAssignments']);
+
+// 職人に関連する現場を取得するルート
+Route::get('/workplaces-for-worker/{workerId}', [ApiController::class, 'getWorkplacesForWorker']);
+
+// 職人のアサインを解除するルート
+Route::post('/cancel-worker-assignment', [ApiController::class, 'cancelWorkerAssignment']);
+
 // 郵便番号から住所を取得するルート
 Route::get('/address', function (Request $request) {
     $zip = $request->query('zip');
@@ -54,3 +63,4 @@ Route::get('/address', function (Request $request) {
     }
     return response()->json(null);
 });
+Route::delete('/assign', [ApiController::class, 'cancelAssignment']);

@@ -9,6 +9,8 @@
 @section('content')
 <div class="card">
     <div class="card-header">
+        <h3 class="card-title">アサイン用カレンダー</h3><br>
+        <p class="text-muted">任意の日付を選択し現場を割り当てることができます。割当て済みの日付をクリックすると、割当ての修正や削除ができます。</p>
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <a href="{{ route('saler.assignments.workers', ['month' => Carbon\Carbon::parse($month)->subMonth()->format('Y-m')]) }}" class="btn btn-outline-secondary">
@@ -89,6 +91,16 @@
     </div>
 </div>
 
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h3 class="card-title">月別アサイン状況</h3>
+    </div>
+    <div class="card-body">
+        <div id="fullcalendar"></div>
+    </div>
+</div>
+
 <!-- アサインモーダル -->
 <div class="modal fade" id="assignModal" tabindex="-1" role="dialog" aria-labelledby="assignModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -110,9 +122,9 @@
                     <input type="hidden" id="assign_date" name="assign_date">
                     <div class="form-group">
                         <label class="font-weight-bold">現場選択 <small class="text-muted">(1つ以上選択してください)</small></label>
-                        <div id="workplaceCheckboxes" class="workplace-checkboxes">
-                            <!-- チェックボックスはJavaScriptで動的に追加 -->
-                        </div>
+                        <select id="workplaceSelect" class="form-control" multiple>
+                            <!-- 現場オプションはJavaScriptで動的に追加 -->
+                        </select>
                     </div>
                     <div id="workplaceTimesContainer">
                         <!-- 現場ごとの時間設定欄はJavaScriptで動的に追加 -->
@@ -120,8 +132,9 @@
                 </form>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="cancelAssignment()">アサイン解除</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
-                <button type="button" class="btn btn-primary" onclick="submitAssign()">保存</button>
+                <button type="button" class="btn btn-primary" onclick="submitAssign()">アサイン</button>
             </div>
         </div>
     </div>
@@ -131,6 +144,8 @@
 @section('css')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.39.0/css/tempusdominus-bootstrap-4.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     .table th, .table td {
         text-align: center;
@@ -238,6 +253,42 @@
     .table td.bg-warning i {
         color: #000;
     }
+    /* FullCalendar用のスタイル */
+    #fullcalendar {
+        margin-top: 20px;
+    }
+    .fc-event {
+        cursor: pointer;
+        background-color: #007bff;
+        border-color: #007bff;
+        color: #fff;
+        padding: 2px 4px;
+        border-radius: 4px;
+        margin-bottom: 2px;
+    }
+    .fc-event-title {
+        font-weight: bold;
+    }
+    /* select2のスタイル調整 */
+    .select2-container {
+        width: 100% !important;
+    }
+    .select2-selection--multiple {
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #007bff;
+        border: 1px solid #006fe6;
+        color: #fff;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: #fff;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: #fff;
+        background-color: #0056b3;
+    }
 
 </style>
 @stop
@@ -248,102 +299,213 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.39.0/js/tempusdominus-bootstrap-4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/locales/ja.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-$(function () {
-    // 月選択用のdatetimepickerの初期化
-    $('#monthpicker').datetimepicker({
-        format: 'YYYY-MM',
-        viewMode: 'months',
-        ignoreReadonly: true,
-        allowInputToggle: true
+    $(function () {
+        // 月選択用のdatetimepickerの初期化
+        $('#monthpicker').datetimepicker({
+            format: 'YYYY-MM',
+            viewMode: 'months',
+            ignoreReadonly: true,
+            allowInputToggle: true
+        });
+
+        // 月が変更されたら自動的にフォームをサブミット
+        $("#monthpicker").on("change.datetimepicker", function (e) {
+            $(this).closest('form').submit();
+        });
+
+        // ツールチップの初期化
+        $('[data-toggle="tooltip"]').tooltip({
+            boundary: 'window'
+        });
+
+        // Flatpickrの日本語ロケールを設定
+        flatpickr.localize(flatpickr.l10ns.ja);
+
+        // FullCalendarの初期化
+        initializeFullCalendar();
     });
 
-    // 月が変更されたら自動的にフォームをサブミット
-    $("#monthpicker").on("change.datetimepicker", function (e) {
-        $(this).closest('form').submit();
-    });
-
-    // ツールチップの初期化
-    $('[data-toggle="tooltip"]').tooltip({
-        boundary: 'window'
-    });
-
-    // Flatpickrの日本語ロケールを設定
-    flatpickr.localize(flatpickr.l10ns.ja);
-});
-
-// アサインモーダルを開く関数
-function openAssignModal(workerId, date) {
-    $('#worker_id').val(workerId);
-    $('#assign_date').val(date);
-    
-    let worker = @json($workers->keyBy('id'));
-    $('#modalWorkerName').text(worker[workerId].name);
-    $('#modalAssignDate').text(moment(date).format('YYYY年M月D日(ddd)'));
-    
-    // 現場リストをクリア
-    $('#workplaceCheckboxes').empty();
-    $('#workplaceTimesContainer').empty();
-    
-    // 現場のチェックボックスを生成
-    let workplaces = @json($workplaces);
-    let selectedDate = moment(date);
-    
-    // 選択された日付が施工期間内にある現場のみをフィルタリング
-    let relevantWorkplaces = workplaces.filter(function(workplace) {
-        let constructionStart = moment(workplace.construction_start);
-        let constructionEnd = moment(workplace.construction_end);
-        return selectedDate.isBetween(constructionStart, constructionEnd, null, '[]');
-    });
-    
-    // フィルタリングされた現場のチェックボックスを生成
-    relevantWorkplaces.forEach(function(workplace) {
-        $('#workplaceCheckboxes').append(`
-            <div class="workplace-checkbox">
-                <input type="checkbox" id="workplace${workplace.id}" name="workplace_ids[]" value="${workplace.id}" onchange="toggleWorkplaceTimeFields(${workplace.id})">
-                <label for="workplace${workplace.id}">${workplace.name}</label>
-            </div>
-        `);
-    });
-
-    // 該当する現場がない場合のメッセージを表示
-    if (relevantWorkplaces.length === 0) {
-        $('#workplaceCheckboxes').append('<p>この日付に該当する現場はありません。</p>');
+    function initializeFullCalendar() {
+        console.log('Initializing FullCalendar');
+        var calendarEl = document.getElementById('fullcalendar');
+        if (!calendarEl) {
+            console.error('Calendar element not found');
+            return;
+        }
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            locale: 'ja',
+            firstDay: 0,
+            height: 'auto',
+            events: function(info, successCallback, failureCallback) {
+                fetchWorkerAssignments(info.start, info.end, successCallback, failureCallback);
+            },
+            eventClick: function(info) {
+                openAssignModal(info.event.extendedProps.workerId, info.event.start);
+            },
+            eventContent: function(arg) {
+                return {
+                    html: `
+                        <div class="fc-content">
+                            <div class="fc-title">${arg.event.title}</div>
+                        </div>
+                    `
+                };
+            },
+            eventDidMount: function(info) {
+                $(info.el).tooltip({
+                    title: `
+                        <strong>現場名:</strong> ${info.event.extendedProps.workplaceName}<br>
+                        <strong>開始時間:</strong> ${info.event.extendedProps.startTime || '未設定'}<br>
+                        <strong>終了時間:</strong> ${info.event.extendedProps.endTime || '未設定'}
+                    `,
+                    html: true,
+                    placement: 'top',
+                    trigger: 'hover',
+                    container: 'body'
+                });
+            }
+        });
+        calendar.render();
+    }
+    function fetchWorkerAssignments(start, end, successCallback, failureCallback) {
+        $.ajax({
+            url: '/api/worker-assignments',
+            method: 'GET',
+            data: {
+                start: start.toISOString(),
+                end: end.toISOString()
+            },
+            success: function(data) {
+                let events = [];
+                for (let workerId in data) {
+                    let worker = data[workerId];
+                    worker.assigns.forEach(function(assign) {
+                        events.push({
+                            title: `${worker.name} - ${assign.workplace_name}`,
+                            start: `${assign.date}T${assign.start_time}`,
+                            end: `${assign.date}T${assign.end_time}`,
+                            allDay: false,
+                            extendedProps: {
+                                workerId: workerId,
+                                workerName: worker.name,
+                                workplaceName: assign.workplace_name,
+                                startTime: assign.start_time || '未設定',
+                                endTime: assign.end_time || '未設定'
+                            },
+                            color: getColorForWorker(workerId)
+                        });
+                    });
+                }
+                successCallback(events);
+            },
+            error: function(xhr, status, error) {
+                console.error("アサインデータの取得に失敗しました:", error);
+                failureCallback(error);
+            }
+        });
+    }
+    function getColorForWorker(index) {
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#C3B091', '#9370DB', '#3CB371', '#20B2AA', '#BA55D3'];
+        return colors[index % colors.length];
     }
 
-    // 既存のアサインを取得して表示
-    $.get(`/api/existing-assigns?worker_id=${workerId}&assign_date=${date}`, function(response) {
-        if (response.success && response.assigns.length > 0) {
-            response.assigns.forEach(assign => {
-                $(`#workplace${assign.workplace_id}`).prop('checked', true);
-                toggleWorkplaceTimeFields(assign.workplace_id, assign.start_time, assign.end_time);
-            });
-        }
+    // アサインモーダルを開く関数
+    function openAssignModal(workerId, date) {
+        $('#worker_id').val(workerId);
+        $('#assign_date').val(date);
+        
+        let worker = @json($workers->keyBy('id'));
+        $('#modalWorkerName').text(worker[workerId].name);
+        $('#modalAssignDate').text(moment(date).format('YYYY年M月D日(ddd)'));
+        
+        // 現場リストをクリア
+        $('#workplaceSelect').empty();
+        $('#workplaceTimesContainer').empty();
+        
+        $.ajax({
+            url: `/api/workplaces-for-worker/${workerId}`,
+            method: 'GET',
+            data: { date: date },
+            success: function(workplaces) {
+                let select = $('#workplaceSelect');
+                workplaces.forEach(workplace => {
+                    select.append(new Option(workplace.name, workplace.id));
+                });
+                select.select2({
+                    placeholder: "現場を選択してください",
+                    allowClear: true
+                });
+                
+                // 既存のアサイン情報を取得して選択状態を設定
+                $.ajax({
+                    url: '/api/existing-assigns',
+                    method: 'GET',
+                    data: {
+                        worker_id: workerId,
+                        assign_date: date
+                    },
+                    success: function(response) {
+                        if (response.success && response.assigns.length > 0) {
+                            let selectedWorkplaces = response.assigns.map(assign => assign.workplace_id.toString());
+                            select.val(selectedWorkplaces).trigger('change');
+                            $('#workplaceTimesContainer').empty(); // 既存のフィールドをクリア
+                            response.assigns.forEach(assign => {
+                                addWorkplaceTimeFields(assign.workplace_id, assign.workplace_name, assign.start_time, assign.end_time);
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("既存のアサイン取得に失敗しました:", error);
+                        alert("既存のアサイン情報の取得中にエラーが発生しました。");
+                    }
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error("現場リストの取得に失敗しました:", error);
+                alert("現場リストの取得中にエラーが発生しました。");
+            }
+        });
+
+        $('#assignModal').modal('show');
+    }
+
+    // Select2の変更イベントを監視
+    $('#workplaceSelect').on('change', function(e) {
+        let selectedWorkplaces = $(this).val();
+        $('#workplaceTimesContainer').empty();
+        selectedWorkplaces.forEach(workplaceId => {
+            let workplaceName = $(this).find(`option[value="${workplaceId}"]`).text();
+            addWorkplaceTimeFields(workplaceId, workplaceName);
+        });
     });
 
-    $('#assignModal').modal('show');
-}
-
-// 現場の時間設定フィールドを切り替える関数
-function toggleWorkplaceTimeFields(workplaceId, startTime = '', endTime = '') {
-    let checkbox = $(`#workplace${workplaceId}`);
-    if (checkbox.is(':checked')) {
+    function addWorkplaceTimeFields(workplaceId, workplaceName, startTime = '09:00', endTime = '17:00') {
         let timeFieldsHtml = `
             <div id="workplaceTime${workplaceId}" class="workplace-time-fields">
-                <h6 class="mb-3">${checkbox.next('label').text()}</h6>
+                <h6 class="mb-3">${workplaceName}</h6>
                 <p class="text-muted mb-3">作業時間を設定してください</p>
                 <div class="time-input-group">
                     <div class="time-input">
                         <label for="startTime${workplaceId}">開始時間</label>
                         <div class="input-with-icon">
-                            <input type="text" class="form-control flatpickr-time" id="startTime${workplaceId}" name="assignments[${workplaceId}][start_time]" value="${startTime}" placeholder="開始時間" required>
+                            <input type="text" class="form-control flatpickr-time" id="startTime${workplaceId}" placeholder="開始時間" value="${startTime}" readonly>
                             <i class="fas fa-clock"></i>
                         </div>
                     </div>
                     <div class="time-input">
                         <label for="endTime${workplaceId}">終了時間</label>
                         <div class="input-with-icon">
-                            <input type="text" class="form-control flatpickr-time" id="endTime${workplaceId}" name="assignments[${workplaceId}][end_time]" value="${endTime}" placeholder="終了時間" required>
+                            <input type="text" class="form-control flatpickr-time" id="endTime${workplaceId}" placeholder="終了時間" value="${endTime}" readonly>
                             <i class="fas fa-clock"></i>
                         </div>
                     </div>
@@ -352,95 +514,150 @@ function toggleWorkplaceTimeFields(workplaceId, startTime = '', endTime = '') {
         `;
         $('#workplaceTimesContainer').append(timeFieldsHtml);
         initializeFlatpickrForWorkplace(workplaceId);
-    } else {
-        $(`#workplaceTime${workplaceId}`).remove();
-    }
-}
-
-// 現場ごとのFlatpickrを初期化する関数
-function initializeFlatpickrForWorkplace(workplaceId) {
-    const commonConfig = {
-        enableTime: true,
-        noCalendar: true,
-        dateFormat: "H:i",
-        time_24hr: true,
-        minuteIncrement: 30,
-        allowInput: true,
-        onClose: function(selectedDates, dateStr, instance) {
-            // 値が空の場合、デフォルト値を設定
-            if (!dateStr) {
-                instance.setDate("09:00");
-            }
-        }
-    };
-
-    // 開始時間のFlatpickr設定
-    flatpickr(`#startTime${workplaceId}`, {
-        ...commonConfig,
-        defaultHour: 9,
-        defaultMinute: 0
-    });
-
-    // 終了時間のFlatpickr設定
-    flatpickr(`#endTime${workplaceId}`, {
-        ...commonConfig,
-        defaultHour: 17,
-        defaultMinute: 0
-    });
-}
-
-// アサイン情報を送信する関数
-function submitAssign() {
-    let formData = {
-        worker_id: $('#worker_id').val(),
-        assign_date: $('#assign_date').val(),
-        assignments: []
-    };
-
-    // チェックされた現場の情報を収集
-    $('input[name="workplace_ids[]"]:checked').each(function() {
-        let workplaceId = $(this).val();
-        let startTime = $(`input[name="assignments[${workplaceId}][start_time]"]`).val();
-        let endTime = $(`input[name="assignments[${workplaceId}][end_time]"]`).val();
-        
-        if (startTime && endTime) {
-            formData.assignments.push({
-                workplace_id: workplaceId,
-                start_time: startTime,
-                end_time: endTime
-            });
-        }
-    });
-
-    // バリデーション: 少なくとも1つの現場が選択されていることを確認
-    if (formData.assignments.length === 0) {
-        alert('少なくとも1つの現場を選択し、時間を設定してください。');
-        return;
     }
 
-    // APIにデータを送信
-    $.ajax({
-        url: '/api/assign-worker',
-        method: 'POST',
-        data: JSON.stringify(formData),
-        contentType: 'application/json',
-        processData: false,
-        success: function(response) {
-            if(response.success) {
-                alert('アサインが成功しました');
-                location.reload(); // ページをリロードして更新を反映
-            } else {
-                alert('アサインに失敗しました: ' + (response.message || '不明なエラー'));
-            }
-        },
-        error: function(xhr) {
-            let errorMessage = '不明なエラーが発生しました';
-            if (xhr.responseJSON && xhr.responseJSON.errors) {
-                errorMessage = Object.values(xhr.responseJSON.errors).flat().join("\n");
-            }
-            alert('エラー: ' + errorMessage);
+    // 現場の時間設定フィールドを切り替える関数
+    function toggleWorkplaceTimeFields(workplaceId, startTime = '', endTime = '') {
+        let checkbox = $(`#workplace${workplaceId}`);
+        if (checkbox.is(':checked')) {
+            let timeFieldsHtml = `
+                <div id="workplaceTime${workplaceId}" class="workplace-time-fields">
+                    <h6 class="mb-3">${checkbox.next('label').text()}</h6>
+                    <p class="text-muted mb-3">作業時間を設定してください</p>
+                    <div class="time-input-group">
+                        <div class="time-input">
+                            <label for="startTime${workplaceId}">開始時間</label>
+                            <div class="input-with-icon">
+                                <input type="text" class="form-control flatpickr-time" id="startTime${workplaceId}" name="assignments[${workplaceId}][start_time]" value="${startTime}" placeholder="開始時間" required>
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="time-input">
+                            <label for="endTime${workplaceId}">終了時間</label>
+                            <div class="input-with-icon">
+                                <input type="text" class="form-control flatpickr-time" id="endTime${workplaceId}" name="assignments[${workplaceId}][end_time]" value="${endTime}" placeholder="終了時間" required>
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#workplaceTimesContainer').append(timeFieldsHtml);
+            initializeFlatpickrForWorkplace(workplaceId);
+        } else {
+            $(`#workplaceTime${workplaceId}`).remove();
         }
-    });
-}
+    }
+
+    // 現場ごとのFlatpickrを初期化する関数
+    function initializeFlatpickrForWorkplace(workplaceId) {
+        const commonConfig = {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            minuteIncrement: 30,
+            allowInput: true,
+            onClose: function(selectedDates, dateStr, instance) {
+                if (!dateStr) {
+                    instance.setDate("09:00");
+                }
+            },
+            onReady: function(selectedDates, dateStr, instance) {
+                instance._input.readOnly = false;
+            }
+        };
+
+        flatpickr(`#startTime${workplaceId}`, {
+            ...commonConfig,
+            defaultHour: 9,
+            defaultMinute: 0
+        });
+
+        flatpickr(`#endTime${workplaceId}`, {
+            ...commonConfig,
+            defaultHour: 17,
+            defaultMinute: 0
+        });
+    }
+    // アサイン情報を送信する関数
+    function submitAssign() {
+        let selectedWorkplaces = $('#workplaceSelect').val();
+
+        if (!selectedWorkplaces || selectedWorkplaces.length === 0) {
+            alert('少なくとも1つの現場を選択してください。');
+            return;
+        }
+
+        let formData = {
+            worker_id: $('#worker_id').val(),
+            assign_date: $('#assign_date').val(),
+            assignments: []
+        };
+
+        selectedWorkplaces.forEach(workplaceId => {
+            let startTime = $(`#startTime${workplaceId}`).val();
+            let endTime = $(`#endTime${workplaceId}`).val();
+            if (startTime && endTime) {
+                formData.assignments.push({
+                    workplace_id: workplaceId,
+                    start_time: startTime,
+                    end_time: endTime
+                });
+            }
+        });
+
+        $.ajax({
+            url: '/api/assign-worker',
+            method: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            processData: false,
+            success: function(response) {
+                if(response.success) {
+                    alert('アサインが成功しました');
+                    location.reload();
+                } else {
+                    alert('アサインに失敗しました: ' + (response.message || '不明なエラー'));
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = '不明なエラーが発生しました';
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMessage = Object.values(xhr.responseJSON.errors).flat().join("\n");
+                }
+                alert('エラー: ' + errorMessage);
+            }
+        });
+    }
+
+    function cancelAssignment() {
+        if(!confirm('本当にこのアサインを解除しますか？')) {
+            return;
+        }
+
+        $.ajax({
+            url: '/api/cancel-worker-assignment',
+            method: 'POST',
+            data: JSON.stringify({
+                worker_id: $('#worker_id').val(),
+                assign_date: $('#assign_date').val()
+            }),
+            contentType: 'application/json',
+            processData: false,
+            success: function(response) {
+                if(response.success) {
+                    alert('アサインの解除が成功しました');
+                    location.reload();
+                } else {
+                    alert('アサインの解除に失敗しました: ' + (response.message || '不明なエラー'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('エラー:', status, error);
+                alert('エラーが発生しました: ' + error);
+            }
+        });
+    }
 </script>
 @stop

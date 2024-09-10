@@ -440,72 +440,87 @@ class WorkplaceController extends Controller
 
     
     /**
-     * * 職人を施工依頼にアサインするメソッド
-     * *
-     * * @param \Illuminate\Http\Request $request
-     * * @param int $id 施工依頼ID
-     * 
-     * * @param string $role ユーザーの役割
-     * * @return \Illuminate\Http\RedirectResponse
-     * */
+     * 職人を施工依頼にアサインするメソッド
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id 施工依頼ID
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeAssign(Request $request, $id)
     {
         Log::info('storeAssign request data:', [
             'request_all' => $request->all(),
-            'route_id' => $id,
-            'role' => $request->input('role')
+            'workplace_id' => $id
         ]);
     
-        $workplace = Workplace::findOrFail($id);
-        $constructionCompanyId = $request->input('construction_company_id');
-        $workerId = $request->input('worker_id');
-        $selectedDates = json_decode($request->input('selected_dates'), true) ?? [];
-        $removedDates = json_decode($request->input('removed_dates'), true) ?? [];
-        $role = $request->input('role', 'saler');
-        
-        Log::info('Decoded data:', [
-            'selectedDates' => $selectedDates,
-            'removedDates' => $removedDates
+        $validator = Validator::make($request->all(), [
+            'workplace_id' => 'required|exists:workplaces,id',
+            'workers' => 'required|json',
+            'selected_dates' => 'required|json',
         ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+    
+        $workplace = Workplace::findOrFail($id);
+        $workers = json_decode($request->input('workers'), true);
+        $selectedDates = json_decode($request->input('selected_dates'), true);
     
         DB::beginTransaction();
     
         try {
-            // 新しく選択された日付に対してアサインを作成または更新
-            foreach ($selectedDates as $dateInfo) {
-                Assign::updateOrCreate(
-                    [
-                        'workplace_id' => $id,
-                        'worker_id' => $workerId,
-                        'start_date' => $dateInfo['date'],
-                        'end_date' => $dateInfo['date'],
-                    ],
-                    [
-                        'construction_company_id' => $constructionCompanyId,
-                        'saler_id' => $workplace->saler_id,
-                        'saler_staff_id' => $workplace->saler_staff_id,
-                        'show_flg' => 1,
-                        'start_time' => $dateInfo['start_time'],
-                        'end_time' => $dateInfo['end_time'],
-                    ]
-                );
-            }
+            foreach ($workers as $workerData) {
+                $workerId = $workerData['worker_id'];
+                $startTime = $workerData['start_time'];
+                $endTime = $workerData['end_time'];
     
-            // 解除された日付のアサインを無効化（show_flg = 0）
-            if (!empty($removedDates)) {
-                $updatedCount = Assign::where('workplace_id', $id)
-                    ->where('worker_id', $workerId)
-                    ->whereIn('start_date', $removedDates)
-                    ->update(['show_flg' => 0]);
+                $worker = Worker::findOrFail($workerId);
     
-                Log::info('Assigns removed:', [
-                    'workplace_id' => $id,
-                    'worker_id' => $workerId,
-                    'removed_dates' => $removedDates,
-                    'updated_count' => $updatedCount
-                ]);
-            } else {
-                Log::info('No assigns to remove');
+                foreach ($selectedDates as $date) {
+                    $conflictingAssign = Assign::where('worker_id', $workerId)
+                        ->where('start_date', $date)
+                        ->where('workplace_id', '!=', $id)
+                        ->where('show_flg', 1)
+                        ->first();
+    
+                    if ($conflictingAssign) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => "職人 {$worker->name} は {$date} に既に別の現場にアサインされています。"
+                        ], 422);
+                    }
+    
+                    // 既存のアサインを探す
+                    $existingAssign = Assign::where('workplace_id', $id)
+                        ->where('worker_id', $workerId)
+                        ->where('start_date', $date)
+                        ->where('show_flg', 1)
+                        ->first();
+    
+                    if ($existingAssign) {
+                        // 既存のアサインを更新
+                        $existingAssign->update([
+                            'start_time' => $startTime,
+                            'end_time' => $endTime,
+                        ]);
+                    } else {
+                        // 新しいアサインを作成
+                        Assign::create([
+                            'workplace_id' => $id,
+                            'worker_id' => $workerId,
+                            'start_date' => $date,
+                            'end_date' => $date,
+                            'construction_company_id' => $worker->construction_company_id,
+                            'saler_id' => $workplace->saler_id,
+                            'saler_staff_id' => $workplace->saler_staff_id,
+                            'show_flg' => 1,
+                            'start_time' => $startTime,
+                            'end_time' => $endTime,
+                        ]);
+                    }
+                }
             }
     
             if ($workplace->status_id == 1) {
@@ -517,23 +532,22 @@ class WorkplaceController extends Controller
     
             Log::info('Assign updated successfully', [
                 'workplace_id' => $id,
-                'worker_id' => $workerId,
-                'selected_dates' => $selectedDates,
-                'removed_dates' => $removedDates
+                'workers' => $workers,
+                'selected_dates' => $selectedDates
             ]);
     
-            return redirect()->route($this->getRoutesByRole($role)['indexRoute'], ['role' => $role])
-                             ->with('success', '職人のアサインが更新されました。');
+            return response()->json(['success' => true, 'message' => '職人のアサインが更新されました。']);
         } catch (\Exception $e) {
             DB::rollBack();
+    
             Log::error('Error in storeAssign', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
     
-            return redirect()->back()->with('error', 'アサインの更新中にエラーが発生しました。');
+            return response()->json(['success' => false, 'message' => 'アサインの更新中にエラーが発生しました。: ' . $e->getMessage()], 500);
         }
-    }    
+    }
     /**
      * * 職人のアサインを解除するメソッド
      * *
