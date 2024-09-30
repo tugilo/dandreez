@@ -59,7 +59,10 @@ Route::prefix('customer')->middleware('auth', 'can:access-customer')->group(func
     Route::post('workplaces/{role}/{workplaceId}/photos', [PhotoController::class, 'store'])->name('customer.workplaces.photos.store')->defaults('role', 'customer');
     Route::put('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('customer.workplaces.photos.update')->defaults('role', 'customer');
     Route::delete('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'destroy'])->name('customer.workplaces.photos.destroy')->defaults('role', 'customer');
-});
+    Route::delete('workplaces/{id}/instructions/{instruction}', [WorkplaceController::class, 'deleteInstruction'])
+        ->name('customer.workplaces.instructions.destroy')
+        ->defaults('role', 'customer');
+    });
 
 // 問屋用のルート
 Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function () {
@@ -70,7 +73,10 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
     Route::get('workplaces/{role}/{id}/edit', [WorkplaceController::class, 'edit'])->name('saler.workplaces.edit')->defaults('role', 'saler');
     Route::put('workplaces/{role}/{id}', [WorkplaceController::class, 'update'])->name('saler.workplaces.update')->defaults('role', 'saler');
     Route::delete('workplaces/{id}', [WorkplaceController::class, 'destroy'])->name('saler.workplaces.destroy')->defaults('role', 'saler');
-    Route::get('workplaces/{role}/{id}/details', [WorkplaceController::class, 'details'])->name('saler.workplaces.details')->defaults('role', 'saler');
+    // 施工依頼詳細ページ
+    Route::get('workplaces/{role}/{id}/details', [WorkplaceController::class, 'details'])
+        ->name('saler.workplaces.details')
+        ->defaults('role', 'saler');
     Route::post('workplaces/{role}/{id}/instructions', [WorkplaceController::class, 'storeInstructions'])->name('saler.workplaces.instructions.store')->defaults('role', 'saler');
     Route::put('workplaces/{role}/{id}/instructions', [WorkplaceController::class, 'updateInstruction'])->name('saler.workplaces.instructions.update')->defaults('role', 'saler');
     Route::delete('workplaces/{role}/{id}/instructions', [WorkplaceController::class, 'deleteInstruction'])->name('saler.workplaces.instructions.delete')->defaults('role', 'saler');
@@ -78,8 +84,11 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
     Route::put('workplaces/{role}/{workplaceId}/files/{id}', [FileController::class, 'update'])->name('saler.workplaces.files.update')->defaults('role', 'saler');
     Route::delete('workplaces/{role}/{workplaceId}/files/{id}', [FileController::class, 'destroy'])->name('saler.workplaces.files.destroy')->defaults('role', 'saler');
     Route::post('workplaces/{role}/{workplaceId}/photos', [PhotoController::class, 'store'])->name('saler.workplaces.photos.store')->defaults('role', 'saler');
-    Route::put('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('saler.workplaces.photos.update')->defaults('role', 'saler');
+    //Route::put('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])->name('saler.workplaces.photos.update')->defaults('role', 'saler');
     Route::delete('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'destroy'])->name('saler.workplaces.photos.destroy')->defaults('role', 'saler');
+    Route::put('workplaces/{role}/{workplaceId}/photos/{id}', [PhotoController::class, 'update'])
+        ->name('saler.workplaces.photos.update')
+        ->defaults('role', 'saler');
     // 承認ルート
     Route::post('workplaces/{role}/{id}/approve', [WorkplaceController::class, 'approve'])->name('saler.workplaces.approve')->defaults('role', 'saler');
     Route::post('workplaces/{role}/{id}/reject', [WorkplaceController::class, 'reject'])->name('saler.workplaces.reject')->defaults('role', 'saler');
@@ -93,8 +102,9 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
     // 職人別アサイン状況表示
     Route::get('assignments/workers', [AssignmentViewController::class, 'workerView'])
         ->name('saler.assignments.workers');
-
-    // 現場別アサイン状況表示 (将来的に実装予定)
+    Route::delete('workplaces/{workplaceId}/instructions/{instructionId}', [WorkplaceController::class, 'deleteInstruction'])
+        ->name('saler.workplaces.instructions.destroy');
+      // 現場別アサイン状況表示 (将来的に実装予定)
     Route::get('assignments/workplaces', [AssignmentViewController::class, 'workplaceView'])
         ->name('saler.assignments.workplaces');
 
@@ -105,6 +115,12 @@ Route::prefix('saler')->middleware('auth', 'can:access-saler')->group(function (
     Route::get('assignments/sites', [SiteAssignmentViewController::class, 'siteView'])
         ->name('saler.assignments.sites');
     Route::post('assignments/store-from-calendar', [WorkplaceController::class, 'storeAssignFromCalendar'])->name('saler.assignments.store-from-calendar');
+    Route::post('workplaces/{id}/assign', [WorkplaceController::class, 'storeAssign'])
+        ->name('saler.workplaces.assign.store')
+        ->defaults('role', 'saler');
+    Route::delete('workplaces/{workplaceId}/assigns/{assign}', [WorkplaceController::class, 'destroyAssign'])
+        ->name('assigns.destroy')
+        ->defaults('role', 'saler');
 });
 
 // 施工業者用のルート

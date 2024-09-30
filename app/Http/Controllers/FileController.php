@@ -21,56 +21,99 @@ class FileController extends Controller
      */
     public function store(Request $request, $role, $workplaceId)
     {
+        Log::info('File store method called', ['role' => $role, 'workplaceId' => $workplaceId]);
+        Log::info('Request data', ['data' => $request->all()]);
+        
         // バリデーションルールの設定とバリデーション実行
-        $validated = $request->validate([
-            'workplace_id' => 'required|exists:workplaces,id',
-            'files.*.file' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
-            'files.*.title' => 'nullable|string|max:255',
-            'files.*.comment' => 'nullable|string|max:255',
-        ]);
-
+        try {
+            $validated = $request->validate([
+                'workplace_id' => 'required|exists:workplaces,id',
+                'files' => 'required|array',
+                'files.*.file' => 'required|file|mimes:jpeg,png,jpg,gif,svg,pdf|max:2048',
+                'files.*.title' => 'nullable|string|max:255',
+                'files.*.comment' => 'nullable|string|max:255',
+            ]);
+            Log::info('Validation passed', ['validated' => $validated]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation failed', ['errors' => $e->errors()]);
+            return response()->json(['error' => $e->errors()], 422);
+        }
+            
+        Log::info('Validation passed', ['validated' => $validated]);
+    
         // リクエストデータのログ記録
         Log::info('File store request data:', $request->all());
-
+    
         $filePaths = [];
-
+    
         // ファイルのアップロード処理
         if (isset($validated['files'])) {
-            foreach ($validated['files'] as $fileData) {
+            foreach ($validated['files'] as $index => $fileData) {
+                Log::info('Processing file', ['index' => $index, 'fileData' => $fileData]);
+                
                 if (isset($fileData['file']) && $fileData['file']->isValid()) {
                     // ファイル名の生成
                     $user_id = Auth::id();
                     $timestamp = time();
-                    $random = bin2hex(random_bytes(8)); // 16桁のランダムな文字列
+                    $random = bin2hex(random_bytes(8));
                     $fileName = 'file_' . $user_id . '_' . $timestamp . '_' . $random . '.' . $fileData['file']->getClientOriginalExtension();
-
+        
                     // 日付ベースのパス生成
                     $datePath = Carbon::now()->format('Y/m/d');
                     $fullPath = 'public/files/' . $datePath;
-
+        
+                    Log::info('File details', [
+                        'fileName' => $fileName,
+                        'datePath' => $datePath,
+                        'fullPath' => $fullPath
+                    ]);
+        
                     // ディレクトリの作成
-                    Storage::makeDirectory($fullPath);
-
+                    if (!Storage::makeDirectory($fullPath)) {
+                        Log::error('Failed to create directory', ['path' => $fullPath]);
+                        return response()->json(['error' => 'Failed to create directory'], 500);
+                    }
+        
                     // ファイルの保存
-                    $fileData['file']->storeAs($fullPath, $fileName);
+                    try {
+                        $fileData['file']->storeAs($fullPath, $fileName);
+                        Log::info('File stored successfully', ['path' => $fullPath . '/' . $fileName]);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to store file', ['error' => $e->getMessage()]);
+                        return response()->json(['error' => 'Failed to store file: ' . $e->getMessage()], 500);
+                    }
 
                     // データベースにファイル情報を保存
-                    $file = new File([
-                        'workplace_id' => $validated['workplace_id'],
-                        'title' => $fileData['title'] ?? null,
-                        'comment' => $fileData['comment'] ?? null,
-                        'file_name' => $fileName,
-                        'directory' => $datePath . '/',
-                    ]);
-                    $file->save();
+                    try {
+                        $file = new File([
+                            'workplace_id' => $validated['workplace_id'],
+                            'title' => $fileData['title'] ?? null,
+                            'comment' => $fileData['comment'] ?? null,
+                            'file_name' => $fileName,
+                            'directory' => $datePath . '/',
+                        ]);
+                        $file->save();
+                        Log::info('File record saved to database', ['file' => $file]);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to save file record to database', ['error' => $e->getMessage()]);
+                    }
+    
                     $filePaths[] = $fullPath . '/' . $fileName;
+                } else {
+                    Log::warning('Invalid file', ['index' => $index]);
+                    return response()->json(['error' => 'Invalid file'], 422);
+
                 }
             }
+        } else {
+            Log::warning('No files in request');
+            return response()->json(['error' => 'No files in request'], 422);
+
         }
-
+    
         // ファイルがアップロードされたことをログに記録
-        Log::info('ファイルがアップロードされました。', ['paths' => $filePaths]);
-
+        Log::info('File upload process completed', ['paths' => $filePaths]);
+    
         // アップロード成功のメッセージとともにリダイレクト
         return redirect()->route($this->getRoutesByRole($role)['detailsRoute'], ['role' => $role, 'id' => $workplaceId])->with('success', 'ファイルがアップロードされました。');
     }
@@ -109,18 +152,12 @@ class FileController extends Controller
      */
     public function destroy($role, $workplaceId, $id)
     {
-        // 指定されたIDのファイルを取得し、論理削除を実行
         $file = File::findOrFail($id);
         $file->show_flg = 0;
         $file->save();
-
-        // ファイルが論理削除されたことをログに記録
-        Log::info('ファイルが論理削除されました。', ['file_id' => $id]);
-
-        // 削除成功のメッセージとともにリダイレクト
-        return redirect()->route($this->getRoutesByRole($role)['detailsRoute'], ['role' => $role, 'id' => $workplaceId])->with('success', 'ファイルが削除されました。');
+    
+        return response()->json(['success' => true, 'message' => 'ファイルが削除されました。']);
     }
-
     /**
      * ユーザーの役割に応じたルートを取得する
      *

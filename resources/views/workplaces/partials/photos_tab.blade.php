@@ -1,71 +1,121 @@
-<div class="tab-pane fade" id="photos" role="tabpanel" aria-labelledby="photos-tab">
-    <!-- 写真をアップロードするフォーム -->
-    <form action="{{ route($photoStoreRoute, ['role' => $role, 'workplaceId' => $workplace->id]) }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        <input type="hidden" name="workplace_id" value="{{ $workplace->id }}">
-        <!-- 写真アップロードフィールド -->
-        <div class="d-flex justify-content-center">
-            <div class="form-group text-center mr-2">
-                <label for="photos1" class="d-block">写真1</label>
-                <input type="file" name="photos[0][file]" id="photos1" class="form-control mb-2">
-                <input type="text" name="photos[0][title]" class="form-control mb-1" placeholder="タイトル">
-                <textarea name="photos[0][comment]" class="form-control" placeholder="コメント"></textarea>
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">写真</h3>
+        <button type="button" class="btn btn-primary float-right" id="addPhotoBtn">追加</button>
+    </div>
+    <div class="card-body">
+        <form id="photoForm" action="{{ route($photoStoreRoute, ['role' => $role, 'workplaceId' => $workplace->id]) }}" method="POST" enctype="multipart/form-data" style="display: none;">
+            @csrf
+            <input type="hidden" name="_method" value="POST">
+            <input type="hidden" name="workplace_id" value="{{ $workplace->id }}">
+            <input type="hidden" name="photo_id" id="photo_id" value="">
+                            
+            <div class="form-group">
+                <label for="photo">写真</label>
+                <input type="file" name="photo" class="form-control-file" required>
             </div>
-            <div class="form-group text-center mr-2">
-                <label for="photos2" class="d-block">写真2</label>
-                <input type="file" name="photos[1][file]" id="photos2" class="form-control mb-2">
-                <input type="text" name="photos[1][title]" class="form-control mb-1" placeholder="タイトル">
-                <textarea name="photos[1][comment]" class="form-control" placeholder="コメント"></textarea>
+            <div class="form-group">
+                <label for="title">タイトル</label>
+                <input type="text" name="title" class="form-control">
             </div>
-            <div class="form-group text-center">
-                <label for="photos3" class="d-block">写真3</label>
-                <input type="file" name="photos[2][file]" id="photos3" class="form-control mb-2">
-                <input type="text" name="photos[2][title]" class="form-control mb-1" placeholder="タイトル">
-                <textarea name="photos[2][comment]" class="form-control" placeholder="コメント"></textarea>
+            <div class="form-group">
+                <label for="comment">コメント</label>
+                <textarea name="comment" class="form-control"></textarea>
             </div>
-        </div>
-        <div class="text-center">
-            <button type="submit" class="btn btn-primary">保存</button>
-        </div>
-    </form>
-    <!-- 既存の写真を表示 -->
-    <div class="mt-4 text-center">
-        <h5>既存の写真</h5>
-        <div class="d-flex flex-wrap justify-content-center">
+            <button type="submit" class="btn btn-primary">アップロード</button>
+            <button type="button" class="btn btn-secondary" id="cancelPhotoBtn">キャンセル</button>
+        </form>
+
+        <div class="row mt-3">
             @foreach($photos as $photo)
-                <div class="p-2 text-center">
-                    <img src="{{ asset('storage/instructions/photos/' . $photo->directory . $photo->file_name) }}" alt="{{ $photo->file_name }}" class="img-thumbnail" style="width: 100px; height: 100px;" data-toggle="modal" data-target="#photoModal" data-src="{{ asset('storage/instructions/photos/' . $photo->directory . $photo->file_name) }}">
-                    <form action="{{ route($photoUpdateRoute, ['role' => $role, 'workplaceId' => $workplace->id, 'id' => $photo->id]) }}" method="POST" class="mt-2">
-                        @csrf
-                        @method('PUT')
-                        <input type="text" name="title" value="{{ $photo->title }}" class="form-control mb-1" placeholder="タイトル">
-                        <textarea name="comment" class="form-control mb-1" placeholder="コメント">{{ $photo->comment }}</textarea>
-                        <button type="submit" class="btn btn-primary btn-sm">更新</button>
-                    </form>
-                    <form action="{{ route($photoDestroyRoute, ['role' => $role, 'workplaceId' => $workplace->id, 'id' => $photo->id]) }}" method="POST" class="mt-2">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm">削除</button>
-                    </form>
-                </div>
+            <div class="col-md-4 mb-3">
+                <img src="{{ asset('storage/instructions/photos/' . $photo->directory . $photo->file_name) }}" alt="{{ $photo->title }}" class="img-fluid" data-toggle="modal" data-target="#photoModal" data-src="{{ asset('storage/instructions/photos/' . $photo->directory . $photo->file_name) }}">
+                <h5>{{ $photo->title }}</h5>
+                <p>{{ $photo->comment }}</p>
+                <button class="btn btn-warning btn-sm edit-photo" data-id="{{ $photo->id }}" data-title="{{ $photo->title }}" data-comment="{{ $photo->comment }}">編集</button>
+                <button class="btn btn-danger btn-sm delete-photo" data-id="{{ $photo->id }}">削除</button>
+            </div>
             @endforeach
         </div>
     </div>
 </div>
 
-<!-- モーダル -->
+<!-- 写真表示モーダル -->
 <div class="modal fade" id="photoModal" tabindex="-1" role="dialog" aria-labelledby="photoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="photoModalLabel">写真の表示</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="閉じる">
+                <h5 class="modal-title" id="photoModalLabel">写真</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body text-center">
-                <img id="modalImage" src="" alt="写真" style="max-width: 100%;">
+            <div class="modal-body">
+                <img src="" class="img-fluid" id="modalImage">
             </div>
         </div>
     </div>
 </div>
+
+@push('js')
+<script>
+$(function() {
+    $('#addPhotoBtn').click(function() {
+        $('#photoForm').show();
+    });
+
+    // キャンセルボタンのクリックイベント
+    $('#cancelPhotoBtn').click(function() {
+        resetPhotoForm();
+    });
+
+
+    $('.delete-photo').click(function() {
+        var id = $(this).data('id');
+        var workplaceId = '{{ $workplace->id }}';
+        if (confirm('本当に削除しますか？')) {
+            $.ajax({
+                url: '{{ route($role . ".workplaces.photos.destroy", ["role" => $role, "workplaceId" => ":workplaceId", "id" => ":id"]) }}'
+                    .replace(':workplaceId', workplaceId)
+                    .replace(':id', id),
+                method: 'DELETE',
+                data: {_token: '{{ csrf_token() }}'},
+                success: function(response) {
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert('エラーが発生しました');
+                }
+            });
+        }
+    });
+    
+    $('#photoModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var src = button.data('src');
+        var modal = $(this);
+        modal.find('.modal-body #modalImage').attr('src', src);
+    });
+    $('.edit-photo').click(function() {
+        var id = $(this).data('id');
+        var title = $(this).data('title');
+        var comment = $(this).data('comment');
+        
+        // フォームに現在の値をセット
+        var updateUrl = '{{ route($photoUpdateRoute, ["role" => $role, "workplaceId" => $workplace->id, "id" => "__id__"]) }}';
+        updateUrl = updateUrl.replace('__id__', id);
+        $('#photoForm').attr('action', updateUrl);
+        $('#photoForm input[name="title"]').val(title);
+        $('#photoForm textarea[name="comment"]').val(comment);
+        $('#photoForm input[name="_method"]').val('PUT');
+        $('#photoForm input[name="photo_id"]').val(id);
+        
+        // ファイル入力フィールドを非表示にし、任意にする
+        $('#photoForm input[name="photo"]').hide().prop('required', false);
+        
+        // フォームを表示
+        $('#photoForm').show();
+    });    
+});
+</script>
+@endpush

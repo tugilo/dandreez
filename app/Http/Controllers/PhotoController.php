@@ -24,49 +24,45 @@ class PhotoController extends Controller
     {
         $validated = $request->validate([
             'workplace_id' => 'required|exists:workplaces,id',
-            'photos.*.file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048',
-            'photos.*.title' => 'nullable|string|max:255',
-            'photos.*.comment' => 'nullable|string|max:255',
+            'photo' => 'required|file|mimes:jpeg,png,jpg,gif|max:2048',
+            'title' => 'nullable|string|max:255',
+            'comment' => 'nullable|string|max:255',
         ]);
     
         Log::info('Photo store request data:', $request->all());
     
         $photoPaths = [];
     
-        if (isset($validated['photos'])) {
-            foreach ($validated['photos'] as $photoData) {
-                if (isset($photoData['file']) && $photoData['file']->isValid()) {
-                    $user_id = Auth::id();
-                    $timestamp = time();
-                    $random = bin2hex(random_bytes(8)); // 16桁のランダムな文字列
-                    $fileName = 'photo_' . $user_id . '_' . $timestamp . '_' . $random . '.' . $photoData['file']->getClientOriginalExtension();
+        if ($request->hasFile('photo')) {
+            $photo = $request->file('photo');
+            $user_id = Auth::id();
+            $timestamp = time();
+            $random = bin2hex(random_bytes(8));
+            $fileName = 'photo_' . $user_id . '_' . $timestamp . '_' . $random . '.' . $photo->getClientOriginalExtension();
     
-                    $datePath = Carbon::now()->format('Y/m/d');
-                    $fullPath = 'public/instructions/photos/' . $datePath;
+            $datePath = Carbon::now()->format('Y/m/d');
+            $fullPath = 'public/instructions/photos/' . $datePath;
     
-                    // ディレクトリを作成
-                    Storage::makeDirectory($fullPath);
+            Storage::makeDirectory($fullPath);
     
-                    $photoData['file']->storeAs($fullPath, $fileName);
+            $photo->storeAs($fullPath, $fileName);
     
-                    $photo = new Photo([
-                        'workplace_id' => $validated['workplace_id'],
-                        'title' => $photoData['title'] ?? null,
-                        'comment' => $photoData['comment'] ?? null,
-                        'file_name' => $fileName,
-                        'directory' => $datePath . '/',
-                    ]);
-                    $photo->save();
-                    $photoPaths[] = $fullPath . '/' . $fileName;
-                }
-            }
+            $newPhoto = new Photo([
+                'workplace_id' => $validated['workplace_id'],
+                'title' => $validated['title'] ?? null,
+                'comment' => $validated['comment'] ?? null,
+                'file_name' => $fileName,
+                'directory' => $datePath . '/',
+            ]);
+            $newPhoto->save();
+            $photoPaths[] = $fullPath . '/' . $fileName;
         }
     
         Log::info('写真がアップロードされました。', ['paths' => $photoPaths]);
     
-        return redirect()->route($this->getRoutesByRole($role)['detailsRoute'], ['role' => $role, 'id' => $workplaceId])->with('success', '写真がアップロードされました。');
-    }
-    
+        return redirect()->route($this->getRoutesByRole($role)['detailsRoute'], ['role' => $role, 'id' => $workplaceId])
+            ->with('success', '写真がアップロードされました。');
+    }    
     
     /**
      * 写真の更新
@@ -82,16 +78,34 @@ class PhotoController extends Controller
         $request->validate([
             'title' => 'nullable|string|max:255',
             'comment' => 'nullable|string|max:255',
+            'photo' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-
+    
         $photo = Photo::findOrFail($id);
-        $photo->update($request->only('title', 'comment'));
-
-        Log::info('写真のタイトル・コメントがが更新されました。', ['photo_id' => $id]);
-
-        return redirect()->route($this->getRoutesByRole($role)['detailsRoute'], ['role' => $role, 'id' => $workplaceId])->with('success', '写真のタイトル・コメントがが更新されました。');
-    }
-
+        $photo->title = $request->title;
+        $photo->comment = $request->comment;
+    
+        if ($request->hasFile('photo')) {
+            // 古い写真を削除
+            Storage::delete('public/instructions/photos/' . $photo->directory . $photo->file_name);
+    
+            // 新しい写真をアップロード
+            $file = $request->file('photo');
+            $fileName = 'photo_' . Auth::id() . '_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . $file->getClientOriginalExtension();
+            $datePath = Carbon::now()->format('Y/m/d');
+            $fullPath = 'public/instructions/photos/' . $datePath;
+            Storage::makeDirectory($fullPath);
+            $file->storeAs($fullPath, $fileName);
+    
+            $photo->file_name = $fileName;
+            $photo->directory = $datePath . '/';
+        }
+    
+        $photo->save();
+    
+        return redirect()->route($this->getRoutesByRole($role)['detailsRoute'], ['role' => $role, 'id' => $workplaceId])
+            ->with('success', '写真が更新されました。');
+    }    
     /**
      * 写真の削除
      *
@@ -106,10 +120,9 @@ class PhotoController extends Controller
         $photo->show_flg = 0;
         $photo->save();
     
-        Log::info('写真が論理削除されました。', ['photo_id' => $id]);
-    
-        return redirect()->route($this->getRoutesByRole($role)['detailsRoute'], ['role' => $role, 'id' => $workplaceId])->with('success', '写真が削除されました。');
+        return response()->json(['success' => true, 'message' => '写真が削除されました。']);
     }
+    
     /**
      * 役割に応じたルートを取得するヘルパーメソッド
      *

@@ -1,153 +1,148 @@
 @extends('adminlte::page')
 
-@section('title', '施工依頼詳細設定')
+@section('title', '施工依頼詳細')
 
 @section('content_header')
-    <h1>施工依頼詳細設定</h1>
+    <h1>施工依頼詳細: {{ $workplace->name }}</h1>
 @stop
 
 @section('content')
-<div class="card">
-    <div class="card-body">
-        @if (session('error'))
-            <div class="alert alert-danger">
-                {{ session('error') }}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title">基本情報</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>ID:</strong> {{ $workplace->id }}</p>
+                            <p><strong>得意先名:</strong> {{ $workplace->customer->name }}</p>
+                            <p><strong>施工期間:</strong> {{ $workplace->construction_start->format('Y/m/d') }} ～ {{ $workplace->construction_end->format('Y/m/d') }}</p>
+                            <p><strong>床面積:</strong> {{ $workplace->floor_space }} m²</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>ステータス:</strong> 
+                                <span class="badge badge-{{ $workplace->status->color }} p-2">{{ $workplace->status->name_ja }}</span>
+                            </p>
+                            <p><strong>施工場所:</strong> {{ $workplace->prefecture }}{{ $workplace->city }}{{ $workplace->address }}{{ $workplace->building }}</p>
+                            <p><strong>作成日:</strong> {{ $workplace->created_at->format('Y/m/d H:i') }}</p>
+                            <p><strong>更新日:</strong> {{ $workplace->updated_at->format('Y/m/d H:i') }}</p>
+                        </div>
+                    </div>
+                    @if($role === 'saler')
+                    <div class="text-center mt-3">
+                        @if($workplace->status_id == 1 || $workplace->status_id == 2)
+                            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#approveModal">承認</button>
+                            <button type="button" class="btn btn-danger" id="rejectButton" data-toggle="modal" data-target="#rejectModal">否認</button>
+                        @elseif($workplace->status_id == 3)
+                            <button type="button" class="btn btn-success active" disabled>承認済み</button>
+                        @elseif($workplace->status_id == 4)
+                            <button type="button" class="btn btn-danger active" disabled>否認済み</button>
+                        @endif
+                    </div>
+                    @endif
+                </div>
             </div>
-        @endif
-        @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
 
-        <div class="mb-4">
-            <!-- 施工依頼情報の表示 -->
-            <h5>施工依頼情報</h5>
-            <table class="table table-bordered">
-                <tr>
-                    <th style="width:20%">ID</th>
-                    <td>{{ $workplace->id }}</td>
-                </tr>
-                <tr>
-                    <th>得意先名</th>
-                    <td>{{ $workplace->customer->name }}</td>
-                </tr>
-                <tr>
-                    <th>施工依頼名</th>
-                    <td>{{ $workplace->name }}</td>
-                </tr>
-                <tr>
-                    <th>施工期間</th>
-                    <td>{{ $workplace->construction_start }} ～ {{ $workplace->construction_end }}</td>
-                </tr>
-                <tr>
-                    <th>施工場所</th>
-                    <td>{{ $workplace->zip }} {{ $workplace->prefecture }} {{ $workplace->city }} {{ $workplace->address }} {{ $workplace->building }}</td>
-                </tr>
-                <tr>
-                    <th>ステータス</th>
-                    <td>
-                        <span class="badge {{ $workplace->status->color }} p-2" style="width: 80px; display: inline-block; text-align: center;">
-                            {{ $workplace->status->name_ja }}
-                        </span>
-                    </td>
-                </tr>
-                <tr>
-                    <th>作成日</th>
-                    <td>{{ $workplace->created_at }}</td>
-                </tr>
-            </table>
-            @if($role === 'saler')
-            <div class="text-center">
-                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#approveModal">承認</button>
-                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#rejectModal">否認</button>
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title">施工指示</h3>
+                </div>
+                <div class="card-body">
+                    @include('workplaces.partials.instructions_tab', ['workplace' => $workplace, 'instructions' => $instructions, 'units' => $units])
+                </div>
             </div>
-            @endif
         </div>
 
-        @include('workplaces.partials.details_tabs', [
-            'workplace' => $workplace,
-            'instructions' => $instructions,
-            'photos' => $photos,
-            'files' => $files,
-            'units' => $units,
-            'role' => $role,
-            'storeRoute' => $storeRoute,
-            'updateRoute' => $updateRoute,
-            'destroyRoute' => $destroyRoute,
-            'instructionsStoreRoute' => $instructionsStoreRoute,
-            'photoStoreRoute' => $photoStoreRoute,
-            'fileStoreRoute' => $fileStoreRoute,
-        ])
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title">現場地図</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="map-container">
+                        <iframe 
+                            width="100%" 
+                            height="300" 
+                            frameborder="0" 
+                            scrolling="no" 
+                            marginheight="0" 
+                            marginwidth="0" 
+                            src="https://maps.google.co.jp/maps?f=q&amp;source=s_q&amp;aq=&amp;ie=UTF8&amp;output=embed&amp;iwloc=b&amp;zoom=15&amp;view=text&amp;q={{ urlencode($workplace->prefecture . ' ' . $workplace->city . ' ' . $workplace->address . ' ' . $workplace->building) }}">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title">写真・ファイル</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="photo-tab" data-toggle="tab" href="#photos" role="tab">写真</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="file-tab" data-toggle="tab" href="#files" role="tab">ファイル</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content mt-3" id="myTabContent">
+                        <div class="tab-pane fade show active" id="photos" role="tabpanel">
+                            @include('workplaces.partials.photos_tab', ['workplace' => $workplace, 'photos' => $photos])
+                        </div>
+                        <div class="tab-pane fade" id="files" role="tabpanel">
+                            @include('workplaces.partials.files_tab', ['workplace' => $workplace, 'files' => $files])
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title">アサイン情報</h3>
+        </div>
+        <div class="card-body">
+            @include('workplaces.partials.assigns_tab', ['workplace' => $workplace])
+        </div>
     </div>
 </div>
-@if($role === 'saler')
-    <!-- 承認モーダル -->
-    <div class="modal fade" id="approveModal" tabindex="-1" role="dialog" aria-labelledby="approveModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="approveModalLabel">施工依頼の承認</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>本当にこの施工依頼を承認しますか？</p>
-                    <p><strong>ID:</strong> {{ $workplace->id }}</p>
-                    <p><strong>得意先:</strong> {{ $workplace->customer->name }}</p>
-                    <p><strong>施工名:</strong> {{ $workplace->name }}</p>
-                    <p><strong>施工期間:</strong> {{ $workplace->construction_start }} ～ {{ $workplace->construction_end }}</p>
-                    <p><strong>施工場所:</strong> {{ $workplace->zip }} {{ $workplace->prefecture }} {{ $workplace->city }} {{ $workplace->address }} {{ $workplace->building }}</p>
-            </div>
-                <div class="modal-footer">
-                    <form action="{{ route($role . '.workplaces.approve', ['role' => $role, 'id' => $workplace->id]) }}" method="POST" onsubmit="return confirm('本当にこの施工依頼を承認しますか？')">
-                        @csrf
-                        <button type="submit" class="btn btn-primary">承認</button>
-                    </form>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- 否認モーダル -->
-    <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="rejectModalLabel">施工依頼の否認</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>本当にこの施工依頼を否認しますか？</p>
-                    <p><strong>ID:</strong> {{ $workplace->id }}</p>
-                    <p><strong>得意先:</strong> {{ $workplace->customer->name }}</p>
-                    <p><strong>施工名:</strong> {{ $workplace->name }}</p>
-                    <p><strong>施工期間:</strong> {{ $workplace->construction_start }} ～ {{ $workplace->construction_end }}</p>
-                    <p><strong>施工場所:</strong> {{ $workplace->zip }} {{ $workplace->prefecture }} {{ $workplace->city }} {{ $workplace->address }} {{ $workplace->building }}</p>
-            </div>
-                <div class="modal-footer">
-                    <form action="{{ route($role . '.workplaces.reject', ['role' => $role, 'id' => $workplace->id]) }}" method="POST" onsubmit="return confirm('本当にこの施工依頼を否認しますか？')">
-                        @csrf
-                        <button type="submit" class="btn btn-danger">否認</button>
-                    </form>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
-                </div>
-            </div>
-        </div>
-    </div>
+
+@if($role === 'saler')
+    @include('workplaces.partials.approve_reject_modals', ['workplace' => $workplace])
 @endif
+
+
 @stop
 
 @section('css')
     <!-- Bootstrap Datepicker CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/timepicker/1.3.5/jquery.timepicker.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/timepicker/1.3.5/jquery.timepicker.min.css">
     <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            margin-bottom: 1rem;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        .badge {
+            font-size: 100%;
+        }
         .table-scrollable {
-            max-height: 150px;
+            max-height: 300px;
             overflow-y: auto;
         }
         .camera-icon {
@@ -185,259 +180,75 @@
             white-space: nowrap;
             text-overflow: ellipsis;
         }
+        .map-container {
+            position: relative;
+            padding-bottom: 75%;
+            height: 0;
+            overflow: hidden;
+        }
+        .map-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .nav-tabs .nav-link {
+            color: #495057;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            color: #007bff;
+        }
     </style>
 @stop
 
 @section('js')
-    <!-- Bootstrap Datepicker JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.ja.min.js"></script>
-    <script>
-        $(function() {
-            // Datepickerの初期化
-            $('.datepicker').datepicker({
-                format: 'yyyy-mm-dd',
-                autoclose: true,
-                language: 'ja',
-                todayHighlight: true
-            });
-
-            // タブの表示を初期化
-            $('#detailTabs a').on('click', function (e) {
-                e.preventDefault();
-                $(this).tab('show');
-            });
-
-            // 最初のタブを表示
-            $('#detailTabs a:first').tab('show');
-
-            // フォームを動的に追加
-            let formCount = {{ count($instructions) }} + 10; // デフォルトで表示されるフォーム数
-            $('#add-instruction-form').on('click', function() {
-                formCount++;
-                $('#instruction-forms').append(`
-                    <tr>
-                        <td class="text-right">${formCount}</td>
-                        <td><input type="text" name="instructions[${formCount - 1}][construction_location]" class="form-control"></td>
-                        <td><input type="text" name="instructions[${formCount - 1}][construction_location_detail]" class="form-control"></td>
-                        <td><input type="text" name="instructions[${formCount - 1}][product_name]" class="form-control"></td>
-                        <td><input type="text" name="instructions[${formCount - 1}][product_number]" class="form-control"></td>
-                        <td><input type="text" name="instructions[${formCount - 1}][amount]" class="form-control"></td>
-                        <td>
-                            <select name="instructions[${formCount - 1}][unit_id]" class="form-control" style="width: auto; min-width: 100px;">
-                                @foreach ($units as $unit)
-                                    <option value="{{ $unit->id }}">{{ $unit->name }}</option>
-                                @endforeach
-                            </select>
-                        </td>
-                    </tr>
-                `);
-            });
-
-            // 編集ボタンが押されたときの動作
-            $(document).on('click', '.edit-instruction', function() {
-                const row = $(this).closest('tr');
-                row.find('td.editable').each(function(index) {
-                    let value = $(this).text().trim();
-                    const input = $('<input>', {
-                        type: 'text',
-                        class: 'form-control',
-                        value: value
-                    });
-                    $(this).html(input);
-                });
-
-                const unitName = row.find('td:eq(7)').text().trim();
-                const select = $('<select>', {
-                    class: 'form-control unit-select',
-                    style: 'width: auto; min-width: 100px;',
-                    html: `@foreach ($units as $unit)
-                                <option value="{{ $unit->id }}" ${unitName === "{{ $unit->name }}" ? 'selected' : ''}>{{ $unit->name }}</option>
-                           @endforeach`
-                });
-                row.find('td:eq(7)').html(select);
-
-                row.find('.edit-instruction').hide();
-                row.find('.save-instruction').show();
-            });
-
-            // 保存ボタンが押されたときの動作
-            $(document).on('click', '.save-instruction', function() {
-                const id = $(this).data('id');
-                const row = $(this).closest('tr');
-                const data = {
-                    construction_location: row.find('td:eq(2) input').val(),
-                    construction_location_detail: row.find('td:eq(3) input').val(),
-                    product_name: row.find('td:eq(4) input').val(),
-                    product_number: row.find('td:eq(5) input').val(),
-                    amount: row.find('td:eq(6) input').val(),
-                    unit_id: row.find('select.unit-select').val(),
-                    _token: '{{ csrf_token() }}'
-                };
-                $.ajax({
-                    url: `/{{ $role }}/workplaces/{{ $role}}/${id}/instructions`,
-                    type: 'PUT',
-                    data: data,
-                    success: function(response) {
-                        alert('指示内容が更新されました。');
-                        location.reload(); // 更新が成功したらページをリロード
-                    },
-                    error: function(response) {
-                        alert('更新に失敗しました。');
-                    }
-                });
-            });
-
-            // 指示内容の削除
-            $(document).on('click', '.delete-instruction', function() {
-                const id = $(this).data('id');
-                if (confirm('本当に削除しますか？')) {
-                    $.ajax({
-                        url: `/{{ $role }}/workplaces/{{ $role}}/${id}/instructions`,
-                        type: 'DELETE',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            alert('指示内容が削除されました。');
-                            location.reload(); // 更新が成功したらページをリロード
-                        },
-                        error: function(response) {
-                            alert('削除に失敗しました。');
-                        }
-                    });
-                }
-            });
-
-            // 合計数量を計算して表示
-            function updateTotalAmount() {
-                let total = 0;
-                $('tbody tr').each(function() {
-                    const amount = parseFloat($(this).find('td:eq(6)').text().trim());
-                    if (!isNaN(amount)) {
-                        total += amount;
-                    }
-                });
-                $('#total-amount').text(total.toFixed(2) + ' m');
-            }
-
-            // 初期表示
-            updateTotalAmount();
-
-            // 編集完了時に合計を更新
-            $(document).on('click', '.save-instruction', function() {
-                updateTotalAmount();
-            });
-
-            // カメラアイコンをクリックしてファイル選択をトリガー
-            $('.camera-icon').on('click', function() {
-                $('#photos').click();
-            });
-
-            // ファイル選択時にアイコンが変更されるように設定
-            $('#photos').on('change', function(event) {
-                const files = event.target.files;
-                if (files && files.length > 0) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        $('.camera-icon').attr('src', e.target.result);
-                    };
-                    reader.readAsDataURL(files[0]);
-                }
-            });
-            $('#photoModal').on('show.bs.modal', function (event) {
-                var button = $(event.relatedTarget);
-                var src = button.data('src');
-                var modal = $(this);
-                modal.find('.modal-body #modalImage').attr('src', src);
-            });
-
-            // 写真の削除
-            $(document).on('click', '.delete-photo', function() {
-                const photoId = $(this).data('id');
-                if (confirm('本当に削除しますか？')) {
-                    $.ajax({
-                        url: `/{{ $role }}/photos/${photoId}`,
-                        type: 'DELETE',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            alert('写真が削除されました。');
-                            location.reload(); // 削除が成功したらページをリロード
-                        },
-                        error: function(response) {
-                            alert('削除に失敗しました。');
-                        }
-                    });
-                }
-            });
-
-            // 写真の編集
-            $(document).on('click', '.edit-photo', function() {
-                var photoId = $(this).data('id');
-                $('#edit-photo-form-' + photoId).show();
-                $(this).hide();
-            });
-
-            // キャンセルボタンの動作
-            $(document).on('click', '.cancel-edit', function() {
-                var photoId = $(this).data('id');
-                $('#edit-photo-form-' + photoId).hide();
-                $('.edit-photo[data-id="' + photoId + '"]').show();
-            });
-
-            // ファイルの削除
-            $(document).on('click', '.delete-file', function() {
-                const fileId = $(this).data('id');
-                if (confirm('本当に削除しますか？')) {
-                    $.ajax({
-                        url: `/{{ $role }}/files/${fileId}`,
-                        type: 'DELETE',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            alert('ファイルが削除されました。');
-                            location.reload(); // 削除が成功したらページをリロード
-                        },
-                        error: function(response) {
-                            alert('削除に失敗しました。');
-                        }
-                    });
-                }
-            });
-            // ファイルの削除
-            $(document).on('click', '.delete-file', function() {
-                const fileId = $(this).data('id');
-                if (confirm('本当に削除しますか？')) {
-                    $.ajax({
-                        url: `/{{ $role }}/files/${fileId}`,
-                        type: 'DELETE',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            alert('ファイルが削除されました。');
-                            location.reload(); // 削除が成功したらページをリロード
-                        },
-                        error: function(response) {
-                            alert('削除に失敗しました。');
-                        }
-                    });
-                }
-            });
-            // タブの選択状態を保存
-            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-                localStorage.setItem('activeTab', $(e.target).attr('href'));
-            });
-
-            // 保存されたタブを読み込む
-            var activeTab = localStorage.getItem('activeTab');
-            if(activeTab){
-                $('#detailTabs a[href="' + activeTab + '"]').tab('show');
-            }
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/timepicker/1.3.5/jquery.timepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.ja.min.js"></script>
+<script>
+    $(function() {
+        // タブの制御
+        $('#myTab a').on('click', function (e) {
+            e.preventDefault();
+            $(this).tab('show');
         });
-    </script>
+
+        var activeTab = localStorage.getItem('activeDetailTab');
+        if(activeTab){
+            $('#myTab a[href="' + activeTab + '"]').tab('show');
+        }
+
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            localStorage.setItem('activeDetailTab', $(e.target).attr('href'));
+        });
+
+        // DatepickerとTimepickerの初期化
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            language: 'ja'
+        });
+
+        $('.timepicker').timepicker({
+            timeFormat: 'HH:mm',
+            interval: 30,
+            minTime: '00:00',
+            maxTime: '23:30',
+            defaultTime: '09:00',
+            startTime: '00:00',
+            dynamic: false,
+            dropdown: true,
+            scrollbar: true
+        });
+
+        // 承認・否認ボタンの制御
+        var hasAssigns = {{ $workplace->assigns->count() > 0 ? 'true' : 'false' }};
+        if (hasAssigns) {
+            $('#rejectModal').modal('hide');
+            $('#rejectButton').prop('disabled', true).attr('title', 'アサインが完了しているため否認できません');
+        }
+    });
+</script>
 @stop
