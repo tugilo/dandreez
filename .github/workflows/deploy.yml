@@ -31,7 +31,7 @@ jobs:
       # EC2サーバーにデプロイ
       - name: Deploy to EC2
         run: |
-          ssh -v StrictHostKeyChecking=no ubuntu@dandreez.dev-tugilo.com << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@dandreez.dev-tugilo.com << 'EOF'
             cd /var/www/laravel/dandreez
             git pull origin develop
             composer install --no-dev --optimize-autoloader
