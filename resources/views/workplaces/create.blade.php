@@ -231,6 +231,12 @@
     <script src="{{ asset('js/address-search.js') }}"></script>
     <script>
         $(document).ready(function() {
+            // Select2の初期化
+            $('.select2').select2({
+                placeholder: "選択してください", // プレースホルダー
+                allowClear: true // 「クリア」ボタンを追加
+            });
+            // 施工期間のDateRangePicker初期化
             $('#construction_period').daterangepicker({
                 locale: {
                     format: 'YYYY-MM-DD',
