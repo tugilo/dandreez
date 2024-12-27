@@ -1,1 +1,1 @@
-array_diff_assoc
+<?php phpinfo() ?>
