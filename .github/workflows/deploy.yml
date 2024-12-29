@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - main
 
 jobs:
   deploy:
@@ -32,12 +33,25 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@dandreez.dev-tugilo.com << 'EOF'
-            cd /var/www/laravel/dandreez
-            git pull origin develop
+            # 使用するディレクトリをブランチに応じて切り替え
+            if [ "$GITHUB_REF_NAME" = "develop" ]; then
+              DEPLOY_DIR="/var/www/laravel/dandreez_dev"
+            elif [ "$GITHUB_REF_NAME" = "main" ]; then
+              DEPLOY_DIR="/var/www/laravel/dandreez_app"
+            else
+              echo "Error: Unknown branch $GITHUB_REF_NAME"
+              exit 1
+            fi
+
+            # デプロイの準備
+            cd $DEPLOY_DIR
+            git pull origin $GITHUB_REF_NAME
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
+
+            # Apacheを再起動
             sudo systemctl restart apache2
           EOF
