@@ -11,11 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # GitHubリポジトリのコードをチェックアウト
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # AWS CLIの設定
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -23,35 +21,30 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-1
 
-      # SSH秘密鍵の設定
       - name: Set up SSH Key
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      # EC2サーバーにデプロイ
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@dandreez.dev-tugilo.com << 'EOF'
-            # 使用するディレクトリをブランチに応じて切り替え
-            if [ "$GITHUB_REF_NAME" = "develop" ]; then
-              DEPLOY_DIR="/var/www/laravel/dandreez_dev"
-            elif [ "$GITHUB_REF_NAME" = "main" ]; then
-              DEPLOY_DIR="/var/www/laravel/dandreez_app"
-            else
-              echo "Error: Unknown branch $GITHUB_REF_NAME"
-              exit 1
-            fi
+          BRANCH_NAME=$(echo ${GITHUB_REF##*/})
+          if [ "$BRANCH_NAME" = "develop" ]; then
+            DEPLOY_DIR="/var/www/laravel/dandreez_dev"
+          elif [ "$BRANCH_NAME" = "main" ]; then
+            DEPLOY_DIR="/var/www/laravel/dandreez_app"
+          else
+            echo "Error: Unknown branch $BRANCH_NAME"
+            exit 1
+          fi
 
-            # デプロイの準備
+          ssh -o StrictHostKeyChecking=no ubuntu@dandreez.dev-tugilo.com << EOF
             cd $DEPLOY_DIR
-            git pull origin $GITHUB_REF_NAME
+            git pull origin $BRANCH_NAME
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-
-            # Apacheを再起動
             sudo systemctl restart apache2
           EOF
