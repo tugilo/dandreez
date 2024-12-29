@@ -201,7 +201,7 @@
 
 @section('css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <style>
         .datepicker {
@@ -222,6 +222,14 @@
             border: 1px solid #ced4da;
             border-radius: 0.25rem;
         }
+        .select2-container .select2-selection--single {
+            height: calc(2.25rem + 2px); /* Bootstrap4標準の高さ */
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }        
     </style>
 @stop
 
@@ -236,6 +244,7 @@
             $('.select2').select2({
                 placeholder: "選択してください", // プレースホルダー
                 allowClear: true // 「クリア」ボタンを追加
+                width: '100%' // 幅を100%に設定
             });
             // 施工期間のDateRangePicker初期化
             $('#construction_period').daterangepicker({
