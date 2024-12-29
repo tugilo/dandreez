@@ -197,7 +197,7 @@
         </div>
     </div>
 </div>
-@stop
+@
 
 @section('css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
@@ -229,7 +229,7 @@
             line-height: 1.5;
             border: 1px solid #ced4da;
             border-radius: 0.25rem;
-        }        
+        }
     </style>
 @stop
 
@@ -243,10 +243,11 @@
             // Select2の初期化
             $('.select2').select2({
                 placeholder: "選択してください", // プレースホルダー
-                allowClear: true // 「クリア」ボタンを追加
-                width: '100%' // 幅を100%に設定
+                allowClear: true,              // 「クリア」ボタンを追加
+                width: '100%'                  // 幅を100%に設定
             });
-            // 施工期間のDateRangePicker初期化
+
+            // DateRangePickerの初期化
             $('#construction_period').daterangepicker({
                 locale: {
                     format: 'YYYY-MM-DD',
@@ -262,25 +263,25 @@
                     firstDay: 1
                 },
                 showDropdowns: true,
-                minYear: parseInt(moment().format('YYYY'),10),
-                maxYear: parseInt(moment().add(10, 'year').format('YYYY'),10),
+                minYear: parseInt(moment().format('YYYY'), 10),
+                maxYear: parseInt(moment().add(10, 'year').format('YYYY'), 10),
                 opens: 'center',
                 drops: 'auto'
-            }, function(start, end, label) {
-                // 日付が選択されたときに隠しフィールドを更新
+            }, function(start, end) {
+                // 選択した日付を隠しフィールドに設定
                 $('#construction_start').val(start.format('YYYY-MM-DD'));
                 $('#construction_end').val(end.format('YYYY-MM-DD'));
             });
 
-            // カレンダーアイコンクリックでDateRangePickerを表示
-            $('.input-group-text').click(function() {
+            // カレンダーアイコンをクリックしたときの動作
+            $('.input-group-text').on('click', function() {
                 $('#construction_period').data('daterangepicker').toggle();
             });
 
-            // フォーム送信時に日付が選択されているか確認
-            $('form').submit(function(e) {
-                var startDate = $('#construction_start').val();
-                var endDate = $('#construction_end').val();
+            // フォーム送信時のバリデーション
+            $('form').on('submit', function(e) {
+                const startDate = $('#construction_start').val();
+                const endDate = $('#construction_end').val();
                 if (!startDate || !endDate) {
                     e.preventDefault();
                     alert('施工期間を選択してください。');
